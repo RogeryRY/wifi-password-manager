@@ -5,12 +5,19 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.ksp)
     alias(libs.plugins.ktfmt.gradle)
+    alias(libs.plugins.refine)
 }
 
 kotlin {
     jvmToolchain(17)
-    compilerOptions { jvmTarget.set(JvmTarget.JVM_17) }
+    compilerOptions {
+        extraWarnings = true
+        freeCompilerArgs.add("-Xwarning-level=UNUSED_ANONYMOUS_PARAMETER:disabled")
+        freeCompilerArgs.add("-Xwarning-level=REDUNDANT_VISIBILITY_MODIFIER:disabled")
+        jvmTarget.set(JvmTarget.JVM_17)
+    }
 }
 
 android {
@@ -19,7 +26,7 @@ android {
 
     defaultConfig {
         applicationId = "io.github.wifi_password_manager"
-        minSdk = 29
+        minSdk = 30
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
@@ -53,40 +60,62 @@ composeCompiler {
 
 ktfmt { kotlinLangStyle() }
 
+ksp {
+    arg("KOIN_CONFIG_CHECK", "true")
+    arg("KOIN_DEFAULT_MODULE", "false")
+    arg("KOIN_LOG_TIMES", "true")
+    arg("KOIN_USE_COMPOSE_VIEWMODEL", "true")
+}
+
 dependencies {
     // AndroidX
+    implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.core.splashscreen)
-    implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.androidx.activity.compose)
-    implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.ui)
+    implementation(libs.androidx.lifecycle.viewmodel.navigation3)
+    implementation(libs.androidx.material.icons.extended)
+    implementation(libs.androidx.material3)
+    implementation(libs.androidx.navigation3.runtime)
+    implementation(libs.androidx.navigation3.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
-    implementation(libs.androidx.material3)
+    implementation(libs.androidx.ui)
+    implementation(libs.lifecycle.viewmodel.compose)
+    implementation(platform(libs.androidx.compose.bom))
 
     // Material Components
     implementation(libs.material.components)
 
     // FileKit
     implementation(libs.filekit.core)
-    implementation(libs.filekit.dialogs.compose)
+    implementation(libs.filekit.dialogs)
+
+    // KotlinX
+    implementation(libs.kotlinx.serialization.json)
 
     // Shizuku
+    compileOnly(project(":hidden-api"))
+    implementation(libs.hiddenapibypass)
+    implementation(libs.refine.runtime)
     implementation(libs.shizuku.api)
     implementation(libs.shizuku.provider)
 
-    // Hidden API Bypass
-    implementation(libs.hiddenapibypass)
+    // Koin
+    implementation(libs.koin.androidx.startup)
+    implementation(libs.koin.annotations)
+    implementation(libs.koin.compose.viewmodel)
+    implementation(libs.koin.compose)
+    implementation(libs.koin.core)
+    ksp(libs.koin.ksp.compiler)
 
     // Testing
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.ui.test.junit4)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    testImplementation(libs.junit)
 
     // Debug
-    debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+    debugImplementation(libs.androidx.ui.tooling)
 }
