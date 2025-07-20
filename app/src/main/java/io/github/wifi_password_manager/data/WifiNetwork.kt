@@ -8,10 +8,10 @@ import dev.rikka.tools.refine.Refine
 import io.github.wifi_password_manager.utils.securityType
 import io.github.wifi_password_manager.utils.simpleKey
 import io.github.wifi_password_manager.utils.stripQuotes
+import kotlin.random.Random
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
-import kotlin.random.Random
 
 @Serializable
 data class WifiNetwork(
