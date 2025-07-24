@@ -5,7 +5,6 @@ package io.github.wifi_password_manager.services
 import android.content.AttributionSource
 import android.content.Context
 import android.net.wifi.IWifiManager
-import android.net.wifi.WifiConfiguration
 import android.net.wifi.WifiManager
 import android.os.Build
 import android.os.Bundle
@@ -16,7 +15,7 @@ import rikka.shizuku.Shizuku
 import rikka.shizuku.ShizukuBinderWrapper
 import rikka.shizuku.SystemServiceHelper
 
-class WifiService(private val json: Json) {
+class WifiService(private val json: Json, private val context: Context) {
     companion object {
         private const val TAG = "WifiService"
 
@@ -83,18 +82,20 @@ class WifiService(private val json: Json) {
                 },
             )
 
-    fun addOrUpdateNetwork(config: WifiConfiguration): Boolean =
+    fun addOrUpdateNetwork(wifiNetwork: WifiNetwork): Boolean =
         runCatching {
+                val config = wifiNetwork.toWifiConfiguration()
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    wifiManager.addOrUpdateNetworkPrivileged(config, SHELL_PACKAGE)?.statusCode ==
-                        WifiManager.AddNetworkResult.STATUS_SUCCESS
+                    wifiManager
+                        .addOrUpdateNetworkPrivileged(config, context.packageName)
+                        ?.statusCode == WifiManager.AddNetworkResult.STATUS_SUCCESS
                 } else {
-                    wifiManager.addOrUpdateNetwork(config, SHELL_PACKAGE) != -1
+                    wifiManager.addOrUpdateNetwork(config, context.packageName) != -1
                 }
             }
             .fold(
                 onSuccess = {
-                    Log.d(TAG, "Network added or updated: $config")
+                    Log.d(TAG, "Network added or updated: $wifiNetwork")
                     it
                 },
                 onFailure = {
@@ -118,5 +119,9 @@ class WifiService(private val json: Json) {
 
     fun exportToJson(networks: List<WifiNetwork>): String {
         return json.encodeToString(networks)
+    }
+
+    fun getNetworks(jsonString: String): List<WifiNetwork> {
+        return json.decodeFromString(jsonString)
     }
 }

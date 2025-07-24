@@ -7,6 +7,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -86,9 +87,7 @@ fun MainView(state: MainViewModel.State, onEvent: (MainViewModel.Event) -> Unit)
         floatingActionButton = {
             if (!state.showingSearch) {
                 MainFloatingActionButtonMenu(
-                    onImportClick = {
-                        // TODO: Implement import functionality
-                    },
+                    onImportClick = { onEvent(MainViewModel.Event.ImportNetworks) },
                     onExportClick = { onEvent(MainViewModel.Event.ExportNetworks) },
                 )
             }
@@ -101,7 +100,7 @@ fun MainView(state: MainViewModel.State, onEvent: (MainViewModel.Event) -> Unit)
             onRefresh = { onEvent(MainViewModel.Event.GetSavedNetworks) },
         ) {
             LazyColumn(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxSize().imePadding(),
                 contentPadding = PaddingValues(12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {

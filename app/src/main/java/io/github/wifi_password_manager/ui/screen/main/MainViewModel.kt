@@ -1,9 +1,13 @@
 package io.github.wifi_password_manager.ui.screen.main
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.vinceglb.filekit.FileKit
+import io.github.vinceglb.filekit.dialogs.FileKitType
+import io.github.vinceglb.filekit.dialogs.openFilePicker
 import io.github.vinceglb.filekit.dialogs.openFileSaver
+import io.github.vinceglb.filekit.readString
 import io.github.vinceglb.filekit.writeString
 import io.github.wifi_password_manager.data.WifiNetwork
 import io.github.wifi_password_manager.services.WifiService
@@ -30,6 +34,10 @@ import kotlinx.datetime.format.byUnicodePattern
 import kotlinx.datetime.toLocalDateTime
 
 class MainViewModel(private val wifiService: WifiService) : ViewModel() {
+    companion object {
+        private const val TAG = "MainViewModel"
+    }
+
     data class State(
         val savedNetworks: List<WifiNetwork> = emptyList(),
         val isLoading: Boolean = false,
@@ -45,6 +53,8 @@ class MainViewModel(private val wifiService: WifiService) : ViewModel() {
         data class SearchTextChanged(val text: String) : Event
 
         data object ExportNetworks : Event
+
+        data object ImportNetworks : Event
     }
 
     private val cachedNetworks = mutableListOf<WifiNetwork>()
@@ -78,6 +88,7 @@ class MainViewModel(private val wifiService: WifiService) : ViewModel() {
     }
 
     fun onEvent(event: Event) {
+        Log.d(TAG, "onEvent: $event")
         viewModelScope.launch {
             when (event) {
                 is Event.GetSavedNetworks -> getSavedNetworks()
@@ -85,6 +96,7 @@ class MainViewModel(private val wifiService: WifiService) : ViewModel() {
                     _state.update { it.copy(showingSearch = !it.showingSearch) }
                 is Event.SearchTextChanged -> _state.update { it.copy(searchText = event.text) }
                 is Event.ExportNetworks -> exportNetworks()
+                is Event.ImportNetworks -> importNetworks()
             }
         }
     }
@@ -106,7 +118,17 @@ class MainViewModel(private val wifiService: WifiService) : ViewModel() {
             FileKit.openFileSaver(
                 suggestedName = "WiFi_${formatter.format(now)}",
                 extension = "json",
-            )
-        withContext(Dispatchers.IO) { file?.writeString(wifiService.exportToJson(cachedNetworks)) }
+            ) ?: return
+        withContext(Dispatchers.IO) { file.writeString(wifiService.exportToJson(cachedNetworks)) }
+    }
+
+    private suspend fun importNetworks() {
+        val file = FileKit.openFilePicker(type = FileKitType.File("json")) ?: return
+
+        val networks = withContext(Dispatchers.IO) { wifiService.getNetworks(file.readString()) }
+        if (networks.isNotEmpty()) {
+            networks.forEach { network -> wifiService.addOrUpdateNetwork(network) }
+        }
+        onEvent(Event.GetSavedNetworks)
     }
 }
