@@ -4,6 +4,7 @@ import android.content.ClipData
 import android.content.ClipDescription
 import android.os.Build
 import android.os.PersistableBundle
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -19,6 +20,7 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.wifi_password_manager.data.WifiNetwork
 import io.github.wifi_password_manager.ui.theme.WiFiPasswordManagerTheme
+import io.github.wifi_password_manager.utils.MOCK
 import kotlinx.coroutines.launch
 
 @Composable
@@ -56,11 +59,15 @@ fun WifiCard(modifier: Modifier = Modifier, network: WifiNetwork) {
                     overflow = TextOverflow.Ellipsis,
                 )
             },
-            supportingContent = { Text(text = network.securityType.name) },
+            supportingContent = { Text(text = network.security) },
         )
 
         if (network.password.isNotEmpty()) {
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            HorizontalDivider(
+                modifier =
+                    Modifier.background(color = ListItemDefaults.containerColor)
+                        .padding(horizontal = 16.dp)
+            )
 
             ListItem(
                 headlineContent = {
@@ -73,7 +80,7 @@ fun WifiCard(modifier: Modifier = Modifier, network: WifiNetwork) {
                         Text(
                             text =
                                 if (obscured) {
-                                    network.password.replace(".".toRegex(), "•")
+                                    "•".repeat(network.password.length)
                                 } else {
                                     network.password
                                 },

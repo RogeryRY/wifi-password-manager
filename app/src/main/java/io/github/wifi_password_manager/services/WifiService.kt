@@ -11,6 +11,12 @@ import android.os.ParcelFileDescriptor
 import android.util.Log
 import io.github.wifi_password_manager.data.ShellResult
 import io.github.wifi_password_manager.data.WifiNetwork
+import io.github.wifi_password_manager.utils.fromWifiConfiguration
+import io.github.wifi_password_manager.utils.groupAndSortedBySsid
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import moe.shizuku.server.IShizukuService
 import rikka.shizuku.Shizuku
@@ -39,6 +45,29 @@ class WifiService(private val json: Json) {
                 else -> throw IllegalArgumentException("Unknown Shizuku user ${Shizuku.getUid()}")
             }
 
+    private val attributionSource by lazy {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            AttributionSource::class
+                .java
+                .getConstructor(
+                    Int::class.java,
+                    String::class.java,
+                    String::class.java,
+                    Set::class.java,
+                    AttributionSource::class.java,
+                )
+                .newInstance(
+                    Shizuku.getUid(),
+                    SHELL_PACKAGE,
+                    SHELL_PACKAGE,
+                    null as Set<String>?,
+                    null,
+                )
+        } else {
+            null
+        }
+    }
+
     fun getPrivilegedConfiguredNetworks(): List<WifiNetwork> =
         runCatching {
                 val configs =
@@ -50,22 +79,7 @@ class WifiService(private val json: Json) {
                                 Bundle().apply {
                                     putParcelable(
                                         "EXTRA_PARAM_KEY_ATTRIBUTION_SOURCE",
-                                        AttributionSource::class
-                                            .java
-                                            .getConstructor(
-                                                Int::class.java,
-                                                String::class.java,
-                                                String::class.java,
-                                                Set::class.java,
-                                                AttributionSource::class.java,
-                                            )
-                                            .newInstance(
-                                                Shizuku.getUid(),
-                                                SHELL_PACKAGE,
-                                                SHELL_PACKAGE,
-                                                null as Set<String>?,
-                                                null,
-                                            ),
+                                        attributionSource,
                                     )
                                 },
                             )
@@ -77,62 +91,47 @@ class WifiService(private val json: Json) {
                 configs
             }
             .fold(
-                onSuccess = { it?.map(WifiNetwork::fromWifiConfiguration).orEmpty() },
+                onSuccess = { configurations ->
+                    configurations
+                        ?.map(WifiNetwork::fromWifiConfiguration)
+                        .orEmpty()
+                        .groupAndSortedBySsid()
+                },
                 onFailure = {
                     Log.e(TAG, "Error getting configured networks", it)
                     emptyList()
                 },
             )
 
-    fun addOrUpdateNetwork(network: WifiNetwork): Boolean =
+    suspend fun addOrUpdateNetworks(networks: List<WifiNetwork>) {
+        if (networks.isEmpty()) return
         runCatching {
-                val command = buildString {
-                    append("cmd wifi add-network \"${network.ssid}\"")
-
-                    when (network.securityType) {
-                        WifiNetwork.SecurityType.OPEN -> append(" open")
-                        WifiNetwork.SecurityType.OWE -> append(" owe")
-                        WifiNetwork.SecurityType.WPA2 -> append(" wpa2 \"${network.password}\"")
-                        WifiNetwork.SecurityType.WPA3 -> append(" wpa3 \"${network.password}\"")
-                        WifiNetwork.SecurityType.WEP -> {
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                                append(" wep \"${network.password}\"")
-                            } else {
-                                throw UnsupportedOperationException(
-                                    "WEP is not supported on this API level"
-                                )
+                withContext(Dispatchers.IO) {
+                    val jobs =
+                        networks.flatMap { network ->
+                            network.securityType.map { securityType ->
+                                async {
+                                    val command = buildCommand(network, securityType)
+                                    execute(command)
+                                }
                             }
                         }
-                    }
-
-                    if (!network.autojoin) append(" -d")
-                    if (network.hidden) append(" -h")
+                    jobs.awaitAll()
                 }
-                execute(command)
             }
             .fold(
-                onSuccess = {
-                    Log.d(TAG, "Network added or updated: $network")
-                    it.resultCode != -1
-                },
-                onFailure = {
-                    Log.e(TAG, "Error adding or updating network", it)
-                    false
-                },
+                onSuccess = { Log.d(TAG, "Networks added or updated") },
+                onFailure = { Log.e(TAG, "Error adding or updating networks", it) },
             )
+    }
 
-    fun removeNetwork(netId: Int): Boolean =
+    fun removeNetwork(netId: Int) {
         runCatching { execute("cmd wifi forget-network $netId") }
             .fold(
-                onSuccess = {
-                    Log.d(TAG, "Network removed: $netId")
-                    it.resultCode != -1
-                },
-                onFailure = {
-                    Log.e(TAG, "Error removing network", it)
-                    false
-                },
+                onSuccess = { Log.d(TAG, "Network removed: $netId") },
+                onFailure = { Log.e(TAG, "Error removing network", it) },
             )
+    }
 
     fun exportToJson(networks: List<WifiNetwork>): String {
         return json.encodeToString(networks)
@@ -142,6 +141,31 @@ class WifiService(private val json: Json) {
         return json.decodeFromString(jsonString)
     }
 
+    private fun buildCommand(network: WifiNetwork, securityType: WifiNetwork.SecurityType): String {
+        return buildString {
+            append("cmd wifi add-network \"${network.ssid}\"")
+            append(
+                when (securityType) {
+                    WifiNetwork.SecurityType.OPEN -> " open"
+                    WifiNetwork.SecurityType.OWE -> " owe"
+                    WifiNetwork.SecurityType.WPA2 -> " wpa2 \"${network.password}\""
+                    WifiNetwork.SecurityType.WPA3 -> " wpa3 \"${network.password}\""
+                    WifiNetwork.SecurityType.WEP -> {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                            " wep \"${network.password}\""
+                        } else {
+                            throw UnsupportedOperationException(
+                                "WEP is not supported on this API level"
+                            )
+                        }
+                    }
+                }
+            )
+            if (!network.autojoin) append(" -d")
+            if (network.hidden) append(" -h")
+        }
+    }
+
     private fun execute(command: String): ShellResult =
         runCatching {
                 val process =
@@ -149,11 +173,13 @@ class WifiService(private val json: Json) {
                         .newProcess(arrayOf("sh", "-c", command), null, null)
                 val output = process.inputStream.text.ifBlank { process.errorStream.text }
                 val resultCode = process.waitFor()
-                ShellResult(resultCode, output.trim())
+                ShellResult(resultCode = resultCode, output = output.trim())
             }
             .getOrElse { ShellResult(resultCode = -1, output = it.stackTraceToString()) }
 
     private val ParcelFileDescriptor.text
         get() =
-            ParcelFileDescriptor.AutoCloseInputStream(this).use { it.bufferedReader().readText() }
+            ParcelFileDescriptor.AutoCloseInputStream(this).use { stream ->
+                stream.bufferedReader().use { it.readText() }
+            }
 }

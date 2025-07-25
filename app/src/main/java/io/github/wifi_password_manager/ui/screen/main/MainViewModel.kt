@@ -12,12 +12,15 @@ import io.github.vinceglb.filekit.writeString
 import io.github.wifi_password_manager.data.WifiNetwork
 import io.github.wifi_password_manager.services.WifiService
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.WhileSubscribed
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
@@ -33,6 +36,7 @@ import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import kotlinx.datetime.format.byUnicodePattern
 import kotlinx.datetime.toLocalDateTime
 
+@OptIn(FlowPreview::class)
 class MainViewModel(private val wifiService: WifiService) : ViewModel() {
     companion object {
         private const val TAG = "MainViewModel"
@@ -72,6 +76,7 @@ class MainViewModel(private val wifiService: WifiService) : ViewModel() {
     init {
         state
             .distinctUntilChangedBy { it.searchText }
+            .debounce(200.milliseconds)
             .map { state ->
                 cachedNetworks.filter {
                     it.ssid.contains(state.searchText.trim(), ignoreCase = true)
@@ -101,11 +106,11 @@ class MainViewModel(private val wifiService: WifiService) : ViewModel() {
         }
     }
 
-    private fun getSavedNetworks() {
-        _state.update { it.copy(isLoading = true) }
-        val networks = wifiService.getPrivilegedConfiguredNetworks()
-        cachedNetworks += networks
-        _state.update { it.copy(savedNetworks = networks, isLoading = false) }
+    private suspend fun getSavedNetworks() {
+        val networks = withContext(Dispatchers.IO) { wifiService.getPrivilegedConfiguredNetworks() }
+        cachedNetworks.clear()
+        cachedNetworks.addAll(networks)
+        _state.update { it.copy(savedNetworks = networks) }
     }
 
     @OptIn(ExperimentalTime::class, FormatStringsInDatetimeFormats::class)
@@ -125,10 +130,16 @@ class MainViewModel(private val wifiService: WifiService) : ViewModel() {
     private suspend fun importNetworks() {
         val file = FileKit.openFilePicker(type = FileKitType.File("json")) ?: return
 
-        val networks = withContext(Dispatchers.IO) { wifiService.getNetworks(file.readString()) }
-        if (networks.isNotEmpty()) {
-            networks.forEach { network -> wifiService.addOrUpdateNetwork(network) }
+        _state.update { it.copy(isLoading = true) }
+
+        withContext(Dispatchers.IO) {
+            val networks = wifiService.getNetworks(file.readString())
+            if (networks.isNotEmpty()) {
+                wifiService.addOrUpdateNetworks(networks)
+                getSavedNetworks()
+            }
         }
-        onEvent(Event.GetSavedNetworks)
+
+        _state.update { it.copy(isLoading = false) }
     }
 }
