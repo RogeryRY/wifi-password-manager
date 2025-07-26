@@ -2,29 +2,72 @@ package io.github.wifi_password_manager.ui.screen.main.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
 import io.github.wifi_password_manager.data.WifiNetwork
 import io.github.wifi_password_manager.ui.theme.WiFiPasswordManagerTheme
+import io.github.wifi_password_manager.utils.DeviceConfiguration
 import io.github.wifi_password_manager.utils.MOCK
+import io.github.wifi_password_manager.utils.plus
 
 @Composable
 fun NetworkList(modifier: Modifier = Modifier, networks: List<WifiNetwork>) {
-    LazyColumn(
-        modifier = modifier,
-        contentPadding = PaddingValues(12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        items(items = networks, key = { it.ssid }) { network -> WifiCard(network = network) }
+    val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
+    val deviceConfiguration = DeviceConfiguration.fromWindowSizeClass(windowSizeClass)
+
+    when (deviceConfiguration) {
+        DeviceConfiguration.MOBILE_PORTRAIT -> {
+            LazyColumn(
+                modifier = modifier,
+                contentPadding =
+                    WindowInsets.navigationBars.asPaddingValues() + PaddingValues(12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                items(items = networks, key = { it.ssid }) { network ->
+                    WifiCard(network = network)
+                }
+            }
+        }
+        else -> {
+            LazyVerticalGrid(
+                modifier = modifier,
+                columns = GridCells.Fixed(2),
+                contentPadding =
+                    WindowInsets.displayCutout.asPaddingValues() +
+                        WindowInsets.navigationBars.asPaddingValues() +
+                        PaddingValues(12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                items(items = networks, key = { it.ssid }) { network ->
+                    WifiCard(network = network, expanded = true)
+                }
+            }
+        }
     }
 }
 
 @PreviewLightDark
 @Composable
 private fun NetworkListPreview() {
+    WiFiPasswordManagerTheme { NetworkList(networks = WifiNetwork.MOCK) }
+}
+
+@PreviewScreenSizes
+@Composable
+private fun AdaptiveNetworkListPreview() {
     WiFiPasswordManagerTheme { NetworkList(networks = WifiNetwork.MOCK) }
 }

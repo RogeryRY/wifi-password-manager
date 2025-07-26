@@ -75,11 +75,14 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.navigation3)
     implementation(libs.androidx.material.icons.extended)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.material3.adaptive)
+    implementation(libs.androidx.material3.adaptive.layout)
+    implementation(libs.androidx.material3.adaptive.navigation)
     implementation(libs.androidx.navigation3.runtime)
     implementation(libs.androidx.navigation3.ui)
+    implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
-    implementation(libs.androidx.ui)
     implementation(libs.lifecycle.viewmodel.compose)
     implementation(platform(libs.androidx.compose.bom))
 
@@ -91,8 +94,8 @@ dependencies {
     implementation(libs.filekit.dialogs)
 
     // KotlinX
-    implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.datetime)
+    implementation(libs.kotlinx.serialization.json)
 
     // Shizuku
     compileOnly(project(":hidden-api"))
@@ -104,8 +107,8 @@ dependencies {
     // Koin
     implementation(libs.koin.androidx.startup)
     implementation(libs.koin.annotations)
-    implementation(libs.koin.compose.viewmodel)
     implementation(libs.koin.compose)
+    implementation(libs.koin.compose.viewmodel)
     implementation(libs.koin.core)
     ksp(libs.koin.ksp.compiler)
 

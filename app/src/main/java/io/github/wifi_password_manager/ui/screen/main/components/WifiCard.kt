@@ -43,7 +43,7 @@ import io.github.wifi_password_manager.utils.MOCK
 import kotlinx.coroutines.launch
 
 @Composable
-fun WifiCard(modifier: Modifier = Modifier, network: WifiNetwork) {
+fun WifiCard(modifier: Modifier = Modifier, network: WifiNetwork, expanded: Boolean = false) {
     ElevatedCard(
         modifier = modifier,
         onClick = {
@@ -62,76 +62,74 @@ fun WifiCard(modifier: Modifier = Modifier, network: WifiNetwork) {
             supportingContent = { Text(text = network.security) },
         )
 
-        if (network.password.isNotEmpty()) {
+        if (network.password.isNotEmpty() || expanded) {
             HorizontalDivider(
                 modifier =
                     Modifier.background(color = ListItemDefaults.containerColor)
                         .padding(horizontal = 16.dp)
             )
 
-            ListItem(
-                headlineContent = {
-                    Text(text = "Password", style = MaterialTheme.typography.titleMedium)
-                },
-                supportingContent = {
-                    if (network.password.isNotEmpty()) {
-                        var obscured by rememberSaveable { mutableStateOf(true) }
-
-                        Text(
-                            text =
-                                if (obscured) {
-                                    "•".repeat(network.password.length)
-                                } else {
-                                    network.password
-                                },
-                            modifier = Modifier.clickable { obscured = !obscured },
-                            maxLines = 1,
-                            overflow = TextOverflow.Clip,
-                            letterSpacing = if (obscured) 4.sp else TextUnit.Unspecified,
-                        )
-                    } else {
-                        Text(text = "No password")
-                    }
-                },
-                trailingContent = {
-                    val clipboard = LocalClipboard.current
-                    val scope = rememberCoroutineScope()
-
-                    FilledTonalButton(
-                        onClick = {
-                            scope.launch {
-                                val clipData =
-                                    ClipData.newPlainText(network.ssid, network.password).apply {
-                                        description.extras =
-                                            PersistableBundle().apply {
-                                                if (
-                                                    Build.VERSION.SDK_INT >=
-                                                        Build.VERSION_CODES.TIRAMISU
-                                                ) {
-                                                    putBoolean(
-                                                        ClipDescription.EXTRA_IS_SENSITIVE,
-                                                        true,
-                                                    )
-                                                } else {
-                                                    putBoolean(
-                                                        "android.content.extra.IS_SENSITIVE",
-                                                        true,
-                                                    )
-                                                }
-                                            }
-                                    }
-                                clipboard.setClipEntry(ClipEntry(clipData))
-                            }
-                        }
-                    ) {
-                        Icon(imageVector = Icons.Filled.ContentCopy, contentDescription = "Copy")
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(text = "Copy")
-                    }
-                },
-            )
+            PasswordItem(network = network)
         }
     }
+}
+
+@Composable
+private fun PasswordItem(modifier: Modifier = Modifier, network: WifiNetwork) {
+    val trailingContent =
+        @Composable {
+            val clipboard = LocalClipboard.current
+            val scope = rememberCoroutineScope()
+
+            FilledTonalButton(
+                onClick = {
+                    scope.launch {
+                        val clipData =
+                            ClipData.newPlainText(network.ssid, network.password).apply {
+                                description.extras =
+                                    PersistableBundle().apply {
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                            putBoolean(ClipDescription.EXTRA_IS_SENSITIVE, true)
+                                        } else {
+                                            putBoolean("android.content.extra.IS_SENSITIVE", true)
+                                        }
+                                    }
+                            }
+                        clipboard.setClipEntry(ClipEntry(clipData))
+                    }
+                }
+            ) {
+                Icon(imageVector = Icons.Filled.ContentCopy, contentDescription = "Copy")
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(text = "Copy")
+            }
+        }
+
+    ListItem(
+        modifier = modifier,
+        headlineContent = { Text(text = "Password", style = MaterialTheme.typography.titleMedium) },
+        supportingContent = {
+            if (network.password.isNotEmpty()) {
+                var obscured by rememberSaveable { mutableStateOf(true) }
+
+                Text(
+                    text =
+                        if (obscured) {
+                            "•".repeat(network.password.length)
+                        } else {
+                            network.password
+                        },
+                    modifier = Modifier.clickable { obscured = !obscured },
+                    maxLines = 1,
+                    overflow = TextOverflow.Clip,
+                    letterSpacing = if (obscured) 4.sp else TextUnit.Unspecified,
+                )
+            } else {
+                Text(text = "No password")
+            }
+        },
+        trailingContent = trailingContent.takeIf { network.password.isNotEmpty() },
+    )
 }
 
 @PreviewLightDark
@@ -143,6 +141,19 @@ private fun WifiCardPreview() {
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             items(WifiNetwork.MOCK) { WifiCard(network = it) }
+        }
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun ExpandedWifiCardPreview() {
+    WiFiPasswordManagerTheme {
+        LazyColumn(
+            contentPadding = PaddingValues(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            items(WifiNetwork.MOCK) { WifiCard(network = it, expanded = true) }
         }
     }
 }

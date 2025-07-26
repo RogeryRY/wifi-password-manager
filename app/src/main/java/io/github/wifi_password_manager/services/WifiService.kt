@@ -9,7 +9,6 @@ import android.os.Build
 import android.os.Bundle
 import android.os.ParcelFileDescriptor
 import android.util.Log
-import io.github.wifi_password_manager.data.ShellResult
 import io.github.wifi_password_manager.data.WifiNetwork
 import io.github.wifi_password_manager.utils.fromWifiConfiguration
 import io.github.wifi_password_manager.utils.groupAndSortedBySsid
@@ -22,6 +21,8 @@ import moe.shizuku.server.IShizukuService
 import rikka.shizuku.Shizuku
 import rikka.shizuku.ShizukuBinderWrapper
 import rikka.shizuku.SystemServiceHelper
+
+private data class ShellResult(val resultCode: Int, val output: String)
 
 class WifiService(private val json: Json) {
     companion object {

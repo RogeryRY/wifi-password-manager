@@ -51,4 +51,4 @@ fun List<WifiNetwork>.groupAndSortedBySsid(): List<WifiNetwork> =
                 autojoin = duplicateNetworks.all { it.autojoin },
             )
         }
-        .sortedBy { it.ssid }
+        .sortedBy { it.ssid.lowercase() }

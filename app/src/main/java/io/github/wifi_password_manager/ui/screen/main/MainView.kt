@@ -5,9 +5,11 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
@@ -44,6 +46,7 @@ fun MainView(state: MainViewModel.State, onEvent: (MainViewModel.Event) -> Unit)
     BackHandler(enabled = state.showingSearch) { onEvent(MainViewModel.Event.ToggleSearch) }
 
     Scaffold(
+        contentWindowInsets = WindowInsets.statusBars,
         topBar = {
             AnimatedContent(
                 targetState = state.showingSearch,
@@ -99,26 +102,22 @@ fun MainView(state: MainViewModel.State, onEvent: (MainViewModel.Event) -> Unit)
         },
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
     ) { innerPadding ->
+        val modifier = Modifier.fillMaxSize().padding(innerPadding).imePadding()
+
         when {
             state.showingSearch -> {
-                NetworkList(
-                    modifier = Modifier.fillMaxSize().padding(innerPadding).imePadding(),
-                    networks = state.savedNetworks,
-                )
+                NetworkList(modifier = modifier, networks = state.savedNetworks)
             }
             state.isLoading -> {
                 LoadingDialog()
             }
             else -> {
                 PullToRefreshBox(
-                    modifier = Modifier.padding(innerPadding),
+                    modifier = modifier,
                     isRefreshing = false,
                     onRefresh = { onEvent(MainViewModel.Event.GetSavedNetworks) },
                 ) {
-                    NetworkList(
-                        modifier = Modifier.fillMaxSize().imePadding(),
-                        networks = state.savedNetworks,
-                    )
+                    NetworkList(modifier = Modifier.fillMaxSize(), networks = state.savedNetworks)
                 }
             }
         }
