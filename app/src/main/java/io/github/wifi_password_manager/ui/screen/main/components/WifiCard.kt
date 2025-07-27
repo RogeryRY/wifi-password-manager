@@ -15,14 +15,20 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Text
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,8 +36,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.toClipEntry
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.TextUnit
@@ -50,17 +56,7 @@ fun WifiCard(modifier: Modifier = Modifier, network: WifiNetwork, expanded: Bool
             // TODO: Handle card click
         },
     ) {
-        ListItem(
-            headlineContent = {
-                Text(
-                    text = network.ssid,
-                    style = MaterialTheme.typography.titleMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            },
-            supportingContent = { Text(text = network.security) },
-        )
+        SSIDItem(network = network)
 
         if (network.password.isNotEmpty() || expanded) {
             HorizontalDivider(
@@ -72,6 +68,38 @@ fun WifiCard(modifier: Modifier = Modifier, network: WifiNetwork, expanded: Bool
             PasswordItem(network = network)
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SSIDItem(modifier: Modifier = Modifier, network: WifiNetwork) {
+    val trailingContent =
+        @Composable {
+            TooltipBox(
+                positionProvider = TooltipDefaults.rememberTooltipPositionProvider(),
+                tooltip = { PlainTooltip { Text(text = "Hidden network") } },
+                state = rememberTooltipState(),
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.VisibilityOff,
+                    contentDescription = "Hidden network",
+                )
+            }
+        }
+
+    ListItem(
+        modifier = modifier,
+        headlineContent = {
+            Text(
+                text = network.ssid,
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        },
+        supportingContent = { Text(text = network.security) },
+        trailingContent = trailingContent.takeIf { network.hidden },
+    )
 }
 
 @Composable
@@ -95,7 +123,7 @@ private fun PasswordItem(modifier: Modifier = Modifier, network: WifiNetwork) {
                                         }
                                     }
                             }
-                        clipboard.setClipEntry(ClipEntry(clipData))
+                        clipboard.setClipEntry(clipData.toClipEntry())
                     }
                 }
             ) {

@@ -78,9 +78,9 @@ class MainViewModel(private val wifiService: WifiService) : ViewModel() {
             .distinctUntilChangedBy { it.searchText }
             .debounce(200.milliseconds)
             .map { state ->
-                cachedNetworks.filter {
-                    it.ssid.contains(state.searchText.trim(), ignoreCase = true)
-                }
+                cachedNetworks
+                    .filter { it.ssid.contains(state.searchText.trim(), ignoreCase = true) }
+                    .sortedBy { it.ssid.lowercase() }
             }
             .onEach { networks -> _state.update { it.copy(savedNetworks = networks) } }
             .launchIn(viewModelScope)
