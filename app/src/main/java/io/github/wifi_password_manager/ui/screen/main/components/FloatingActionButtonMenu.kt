@@ -23,7 +23,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import io.github.wifi_password_manager.R
 import io.github.wifi_password_manager.ui.theme.WiFiPasswordManagerTheme
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -50,7 +52,7 @@ fun MainFloatingActionButtonMenu(
 
                 Icon(
                     imageVector = imageVector,
-                    contentDescription = "More options",
+                    contentDescription = stringResource(R.string.more_options_description),
                     modifier = Modifier.animateIcon(checkedProgress = { checkedProgress }),
                 )
             }
@@ -58,8 +60,13 @@ fun MainFloatingActionButtonMenu(
         modifier = modifier,
     ) {
         FloatingActionButtonMenuItem(
-            icon = { Icon(imageVector = Icons.Filled.FileDownload, contentDescription = "Import") },
-            text = { Text(text = "Import") },
+            icon = {
+                Icon(
+                    imageVector = Icons.Filled.FileDownload,
+                    contentDescription = stringResource(R.string.import_action),
+                )
+            },
+            text = { Text(text = stringResource(R.string.import_action)) },
             onClick = {
                 onImportClick()
                 fabMenuExpanded = false
@@ -67,8 +74,13 @@ fun MainFloatingActionButtonMenu(
         )
 
         FloatingActionButtonMenuItem(
-            icon = { Icon(imageVector = Icons.Filled.FileUpload, contentDescription = "Export") },
-            text = { Text(text = "Export") },
+            icon = {
+                Icon(
+                    imageVector = Icons.Filled.FileUpload,
+                    contentDescription = stringResource(R.string.export_action),
+                )
+            },
+            text = { Text(text = stringResource(R.string.export_action)) },
             onClick = {
                 onExportClick()
                 fabMenuExpanded = false

@@ -33,9 +33,11 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
+import io.github.wifi_password_manager.R
 import io.github.wifi_password_manager.ui.screen.main.MainViewModel
 import io.github.wifi_password_manager.ui.theme.WiFiPasswordManagerTheme
 
@@ -69,14 +71,16 @@ fun SearchBar(
             value = state.searchText,
             onValueChange = { onEvent(MainViewModel.Event.SearchTextChanged(it)) },
             singleLine = true,
-            placeholder = { Text(text = "Find by SSID") },
+            placeholder = { Text(text = stringResource(R.string.search_hint)) },
             keyboardOptions =
                 KeyboardOptions(imeAction = ImeAction.Search, keyboardType = KeyboardType.Text),
             keyboardActions = KeyboardActions(onSearch = { keyboardController?.hide() }),
             leadingIcon = {
                 TooltipBox(
                     positionProvider = TooltipDefaults.rememberTooltipPositionProvider(),
-                    tooltip = { PlainTooltip { Text(text = "Back") } },
+                    tooltip = {
+                        PlainTooltip { Text(text = stringResource(R.string.back_tooltip)) }
+                    },
                     state = rememberTooltipState(),
                 ) {
                     IconButton(onClick = { onEvent(MainViewModel.Event.ToggleSearch) }) {

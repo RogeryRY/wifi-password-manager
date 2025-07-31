@@ -14,7 +14,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
+import io.github.wifi_password_manager.R
 import io.github.wifi_password_manager.data.Settings
 import io.github.wifi_password_manager.ui.theme.WiFiPasswordManagerTheme
 
@@ -29,8 +31,8 @@ fun ThemeModeItem(
 
     ListItem(
         modifier = modifier.clickable { showBottomSheet = true },
-        headlineContent = { Text(text = "App Theme") },
-        supportingContent = { Text(text = "Change the app's appearance") },
+        headlineContent = { Text(text = stringResource(R.string.app_theme_title)) },
+        supportingContent = { Text(text = stringResource(R.string.app_theme_description)) },
         trailingContent = {
             Text(text = themeMode.name.lowercase().replaceFirstChar { it.uppercase() })
         },

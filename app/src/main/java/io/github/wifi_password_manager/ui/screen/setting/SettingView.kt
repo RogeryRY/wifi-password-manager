@@ -17,8 +17,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import io.github.wifi_password_manager.R
 import io.github.wifi_password_manager.data.Settings
 import io.github.wifi_password_manager.navigation.LocalNavBackStack
 import io.github.wifi_password_manager.ui.screen.setting.components.ThemeModeItem
@@ -40,13 +42,13 @@ fun SettingView(state: Settings, onEvent: (SettingViewModel.Event) -> Unit) {
                         )
                     }
                 },
-                title = { Text(text = "Settings") },
+                title = { Text(text = stringResource(R.string.settings_title)) },
             )
         }
     ) { innerPadding ->
         Column(modifier = Modifier.padding(innerPadding)) {
             Text(
-                text = "Appearance",
+                text = stringResource(R.string.appearance_section),
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(start = 16.dp),
             )
@@ -61,7 +63,7 @@ fun SettingView(state: Settings, onEvent: (SettingViewModel.Event) -> Unit) {
                         Modifier.clickable {
                             onEvent(SettingViewModel.Event.ToggleMaterialYou(!state.useMaterialYou))
                         },
-                    headlineContent = { Text(text = "Material You") },
+                    headlineContent = { Text(text = stringResource(R.string.material_you_title)) },
                     trailingContent = {
                         Switch(
                             checked = state.useMaterialYou,

@@ -27,7 +27,9 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
+import io.github.wifi_password_manager.R
 import io.github.wifi_password_manager.data.WifiNetwork
 import io.github.wifi_password_manager.navigation.LocalNavBackStack
 import io.github.wifi_password_manager.navigation.SettingScreen
@@ -56,12 +58,16 @@ fun MainView(state: MainViewModel.State, onEvent: (MainViewModel.Event) -> Unit)
                     SearchBar(state = state, onEvent = onEvent)
                 } else {
                     TopAppBar(
-                        title = { Text(text = "Saved WiFi Networks") },
+                        title = { Text(text = stringResource(R.string.main_title)) },
                         actions = {
                             TooltipBox(
                                 positionProvider =
                                     TooltipDefaults.rememberTooltipPositionProvider(),
-                                tooltip = { PlainTooltip { Text(text = "Search") } },
+                                tooltip = {
+                                    PlainTooltip {
+                                        Text(text = stringResource(R.string.search_tooltip))
+                                    }
+                                },
                                 state = rememberTooltipState(),
                             ) {
                                 IconButton(
@@ -69,7 +75,7 @@ fun MainView(state: MainViewModel.State, onEvent: (MainViewModel.Event) -> Unit)
                                 ) {
                                     Icon(
                                         imageVector = Icons.Filled.Search,
-                                        contentDescription = "Search",
+                                        contentDescription = stringResource(R.string.search_tooltip),
                                     )
                                 }
                             }
@@ -77,13 +83,18 @@ fun MainView(state: MainViewModel.State, onEvent: (MainViewModel.Event) -> Unit)
                             TooltipBox(
                                 positionProvider =
                                     TooltipDefaults.rememberTooltipPositionProvider(),
-                                tooltip = { PlainTooltip { Text(text = "Settings") } },
+                                tooltip = {
+                                    PlainTooltip {
+                                        Text(text = stringResource(R.string.settings_tooltip))
+                                    }
+                                },
                                 state = rememberTooltipState(),
                             ) {
                                 IconButton(onClick = { navBackStack.add(SettingScreen) }) {
                                     Icon(
                                         imageVector = Icons.Filled.Settings,
-                                        contentDescription = "Settings",
+                                        contentDescription =
+                                            stringResource(R.string.settings_tooltip),
                                     )
                                 }
                             }

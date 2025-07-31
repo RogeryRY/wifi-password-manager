@@ -37,12 +37,15 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.toClipEntry
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import io.github.wifi_password_manager.R
 import io.github.wifi_password_manager.data.WifiNetwork
 import io.github.wifi_password_manager.ui.theme.WiFiPasswordManagerTheme
 import io.github.wifi_password_manager.utils.MOCK
@@ -73,16 +76,20 @@ fun WifiCard(modifier: Modifier = Modifier, network: WifiNetwork, expanded: Bool
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SSIDItem(modifier: Modifier = Modifier, network: WifiNetwork) {
+    val context = LocalContext.current
+
     val trailingContent =
         @Composable {
             TooltipBox(
                 positionProvider = TooltipDefaults.rememberTooltipPositionProvider(),
-                tooltip = { PlainTooltip { Text(text = "Hidden network") } },
+                tooltip = {
+                    PlainTooltip { Text(text = stringResource(R.string.hidden_network_tooltip)) }
+                },
                 state = rememberTooltipState(),
             ) {
                 Icon(
                     imageVector = Icons.Filled.VisibilityOff,
-                    contentDescription = "Hidden network",
+                    contentDescription = stringResource(R.string.hidden_network_tooltip),
                 )
             }
         }
@@ -97,7 +104,7 @@ fun SSIDItem(modifier: Modifier = Modifier, network: WifiNetwork) {
                 overflow = TextOverflow.Ellipsis,
             )
         },
-        supportingContent = { Text(text = network.security) },
+        supportingContent = { Text(text = network.getSecurity(context)) },
         trailingContent = trailingContent.takeIf { network.hidden },
     )
 }
@@ -127,15 +134,23 @@ private fun PasswordItem(modifier: Modifier = Modifier, network: WifiNetwork) {
                     }
                 }
             ) {
-                Icon(imageVector = Icons.Filled.ContentCopy, contentDescription = "Copy")
+                Icon(
+                    imageVector = Icons.Filled.ContentCopy,
+                    contentDescription = stringResource(R.string.copy_description),
+                )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(text = "Copy")
+                Text(text = stringResource(R.string.copy_action))
             }
         }
 
     ListItem(
         modifier = modifier,
-        headlineContent = { Text(text = "Password", style = MaterialTheme.typography.titleMedium) },
+        headlineContent = {
+            Text(
+                text = stringResource(R.string.password_label),
+                style = MaterialTheme.typography.titleMedium,
+            )
+        },
         supportingContent = {
             if (network.password.isNotEmpty()) {
                 var obscured by rememberSaveable { mutableStateOf(true) }
@@ -143,7 +158,8 @@ private fun PasswordItem(modifier: Modifier = Modifier, network: WifiNetwork) {
                 Text(
                     text =
                         if (obscured) {
-                            "•".repeat(network.password.length)
+                            stringResource(R.string.password_mask_character)
+                                .repeat(network.password.length)
                         } else {
                             network.password
                         },
@@ -153,7 +169,7 @@ private fun PasswordItem(modifier: Modifier = Modifier, network: WifiNetwork) {
                     letterSpacing = if (obscured) 4.sp else TextUnit.Unspecified,
                 )
             } else {
-                Text(text = "No password")
+                Text(text = stringResource(R.string.no_password))
             }
         },
         trailingContent = trailingContent.takeIf { network.password.isNotEmpty() },

@@ -13,9 +13,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
+import io.github.wifi_password_manager.R
 import io.github.wifi_password_manager.ui.theme.WiFiPasswordManagerTheme
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
@@ -38,7 +40,7 @@ fun LoadingDialog(modifier: Modifier = Modifier) {
             ) {
                 CircularWavyProgressIndicator(modifier = Modifier.padding(vertical = 12.dp))
 
-                Text(text = "Loading...")
+                Text(text = stringResource(R.string.loading_message))
             }
         }
     }

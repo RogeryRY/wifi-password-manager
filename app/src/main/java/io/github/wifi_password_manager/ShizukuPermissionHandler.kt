@@ -13,6 +13,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import io.github.wifi_password_manager.utils.hasShizukuPermission
 import io.github.wifi_password_manager.utils.launchUrl
 import rikka.shizuku.Shizuku
@@ -85,13 +86,8 @@ private fun ShizukuErrorDialog(onDismiss: () -> Unit) {
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(text = "Shizuku Required") },
-        text = {
-            Text(
-                text =
-                    "Shizuku is required to use this app. If you have Shizuku installed, please start it. Otherwise, you can install Shizuku from the Play Store."
-            )
-        },
+        title = { Text(text = stringResource(R.string.shizuku_required_title)) },
+        text = { Text(text = stringResource(R.string.shizuku_required_message)) },
         confirmButton = {
             TextButton(
                 onClick = {
@@ -109,9 +105,17 @@ private fun ShizukuErrorDialog(onDismiss: () -> Unit) {
                     onDismiss()
                 }
             ) {
-                Text(text = if (isShizukuInstalled) "Open Shizuku" else "Install Shizuku")
+                Text(
+                    text =
+                        stringResource(
+                            if (isShizukuInstalled) R.string.open_shizuku
+                            else R.string.install_shizuku
+                        )
+                )
             }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(text = "Cancel") } },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(text = stringResource(R.string.cancel)) }
+        },
     )
 }

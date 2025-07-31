@@ -2,6 +2,9 @@
 
 package io.github.wifi_password_manager.data
 
+import android.content.Context
+import androidx.annotation.StringRes
+import io.github.wifi_password_manager.R
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -17,8 +20,8 @@ data class WifiNetwork(
 ) {
     companion object
 
-    val security: String
-        get() = securityType.joinToString("/") { it.displayName }
+    fun getSecurity(context: Context): String =
+        securityType.joinToString("/") { context.getString(it.displayNameRes) }
 
     @Serializable
     enum class SecurityType {
@@ -28,14 +31,15 @@ data class WifiNetwork(
         WPA3,
         WEP;
 
-        val displayName: String
+        @get:StringRes
+        val displayNameRes: Int
             get() =
                 when (this) {
-                    OPEN -> "Open"
-                    OWE -> "OWE"
-                    WPA2 -> "WPA/WPA2"
-                    WPA3 -> "WPA3"
-                    WEP -> "WEP"
+                    OPEN -> R.string.security_open
+                    OWE -> R.string.security_owe
+                    WPA2 -> R.string.security_wpa2
+                    WPA3 -> R.string.security_wpa3
+                    WEP -> R.string.security_wep
                 }
     }
 }
