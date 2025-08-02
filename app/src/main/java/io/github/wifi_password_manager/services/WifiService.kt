@@ -3,12 +3,14 @@
 package io.github.wifi_password_manager.services
 
 import android.content.AttributionSource
+import android.content.AttributionSourceHidden
 import android.content.Context
 import android.net.wifi.IWifiManager
 import android.os.Build
 import android.os.Bundle
 import android.os.ParcelFileDescriptor
 import android.util.Log
+import dev.rikka.tools.refine.Refine
 import io.github.wifi_password_manager.data.WifiNetwork
 import io.github.wifi_password_manager.utils.fromWifiConfiguration
 import io.github.wifi_password_manager.utils.groupAndSortedBySsid
@@ -47,24 +49,17 @@ class WifiService(private val context: Context, private val json: Json) {
                 else -> throw IllegalArgumentException("Unknown Shizuku user ${Shizuku.getUid()}")
             }
 
-    private val attributionSource by lazy {
+    private val attributionSource: AttributionSource? by lazy {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            AttributionSource::class
-                .java
-                .getConstructor(
-                    Int::class.java,
-                    String::class.java,
-                    String::class.java,
-                    Set::class.java,
-                    AttributionSource::class.java,
-                )
-                .newInstance(
+            Refine.unsafeCast(
+                AttributionSourceHidden(
                     Shizuku.getUid(),
                     SHELL_PACKAGE,
                     SHELL_PACKAGE,
                     null as Set<String>?,
                     null,
                 )
+            )
         } else {
             null
         }

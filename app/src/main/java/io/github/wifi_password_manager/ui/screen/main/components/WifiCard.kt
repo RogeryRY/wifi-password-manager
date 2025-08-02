@@ -53,12 +53,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun WifiCard(modifier: Modifier = Modifier, network: WifiNetwork, expanded: Boolean = false) {
-    ElevatedCard(
-        modifier = modifier,
-        onClick = {
-            // TODO: Handle card click
-        },
-    ) {
+    ElevatedCard(modifier = modifier) {
         SSIDItem(network = network)
 
         if (network.password.isNotEmpty() || expanded) {
@@ -75,7 +70,7 @@ fun WifiCard(modifier: Modifier = Modifier, network: WifiNetwork, expanded: Bool
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SSIDItem(modifier: Modifier = Modifier, network: WifiNetwork) {
+private fun SSIDItem(modifier: Modifier = Modifier, network: WifiNetwork) {
     val context = LocalContext.current
 
     val trailingContent =

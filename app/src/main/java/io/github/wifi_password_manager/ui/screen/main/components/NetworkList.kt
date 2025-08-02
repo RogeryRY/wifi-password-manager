@@ -36,14 +36,14 @@ fun NetworkList(modifier: Modifier = Modifier, networks: List<WifiNetwork>) {
                 modifier = modifier,
                 contentPadding =
                     WindowInsets.navigationBars.asPaddingValues() + PaddingValues(12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 items(items = networks, key = { it.ssid }) { network ->
                     WifiCard(network = network)
                 }
             }
         }
-        else -> {
+        DeviceConfiguration.TABLET_PORTRAIT -> {
             LazyVerticalGrid(
                 modifier = modifier,
                 columns = GridCells.Fixed(2),
@@ -53,8 +53,26 @@ fun NetworkList(modifier: Modifier = Modifier, networks: List<WifiNetwork>) {
                         .asPaddingValues() +
                         WindowInsets.navigationBars.asPaddingValues() +
                         PaddingValues(12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                items(items = networks, key = { it.ssid }) { network ->
+                    WifiCard(network = network, expanded = true)
+                }
+            }
+        }
+        else -> {
+            LazyVerticalGrid(
+                modifier = modifier,
+                columns = GridCells.Adaptive(400.dp),
+                contentPadding =
+                    WindowInsets.displayCutout
+                        .only(WindowInsetsSides.Horizontal)
+                        .asPaddingValues() +
+                        WindowInsets.navigationBars.asPaddingValues() +
+                        PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 items(items = networks, key = { it.ssid }) { network ->
                     WifiCard(network = network, expanded = true)
