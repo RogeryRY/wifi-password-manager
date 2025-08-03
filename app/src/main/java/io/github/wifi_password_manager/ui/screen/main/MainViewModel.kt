@@ -3,18 +3,10 @@ package io.github.wifi_password_manager.ui.screen.main
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import io.github.vinceglb.filekit.FileKit
-import io.github.vinceglb.filekit.dialogs.FileKitType
-import io.github.vinceglb.filekit.dialogs.openFilePicker
-import io.github.vinceglb.filekit.dialogs.openFileSaver
-import io.github.vinceglb.filekit.readString
-import io.github.vinceglb.filekit.writeString
 import io.github.wifi_password_manager.data.WifiNetwork
 import io.github.wifi_password_manager.services.WifiService
-import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
-import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,11 +22,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.format.FormatStringsInDatetimeFormats
-import kotlinx.datetime.format.byUnicodePattern
-import kotlinx.datetime.toLocalDateTime
 
 @OptIn(FlowPreview::class)
 class MainViewModel(private val wifiService: WifiService) : ViewModel() {
@@ -44,7 +31,6 @@ class MainViewModel(private val wifiService: WifiService) : ViewModel() {
 
     data class State(
         val savedNetworks: List<WifiNetwork> = emptyList(),
-        val isLoading: Boolean = false,
         val showingSearch: Boolean = false,
         val searchText: String = "",
     )
@@ -55,10 +41,6 @@ class MainViewModel(private val wifiService: WifiService) : ViewModel() {
         data object ToggleSearch : Event
 
         data class SearchTextChanged(val text: String) : Event
-
-        data object ExportNetworks : Event
-
-        data object ImportNetworks : Event
     }
 
     private val cachedNetworks = mutableListOf<WifiNetwork>()
@@ -100,8 +82,6 @@ class MainViewModel(private val wifiService: WifiService) : ViewModel() {
                 is Event.ToggleSearch ->
                     _state.update { it.copy(showingSearch = !it.showingSearch) }
                 is Event.SearchTextChanged -> _state.update { it.copy(searchText = event.text) }
-                is Event.ExportNetworks -> exportNetworks()
-                is Event.ImportNetworks -> importNetworks()
             }
         }
     }
@@ -111,35 +91,5 @@ class MainViewModel(private val wifiService: WifiService) : ViewModel() {
         cachedNetworks.clear()
         cachedNetworks.addAll(networks)
         _state.update { it.copy(savedNetworks = networks) }
-    }
-
-    @OptIn(ExperimentalTime::class, FormatStringsInDatetimeFormats::class)
-    private suspend fun exportNetworks() {
-        if (cachedNetworks.isEmpty()) return
-
-        val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
-        val formatter = LocalDateTime.Format { byUnicodePattern(pattern = "yyyy-MM-dd_HH:mm:ss") }
-        val file =
-            FileKit.openFileSaver(
-                suggestedName = "WiFi_${formatter.format(now)}",
-                extension = "json",
-            ) ?: return
-        withContext(Dispatchers.IO) { file.writeString(wifiService.exportToJson(cachedNetworks)) }
-    }
-
-    private suspend fun importNetworks() {
-        val file = FileKit.openFilePicker(type = FileKitType.File("json")) ?: return
-
-        _state.update { it.copy(isLoading = true) }
-
-        withContext(Dispatchers.IO) {
-            val networks = wifiService.getNetworks(file.readString())
-            if (networks.isNotEmpty()) {
-                wifiService.addOrUpdateNetworks(networks)
-                getSavedNetworks()
-            }
-        }
-
-        _state.update { it.copy(isLoading = false) }
     }
 }

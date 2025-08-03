@@ -5,33 +5,28 @@
     <string name="main_title">Saved WiFi Networks</string>
     <string name="search_hint">Find by SSID</string>
     <string name="search_tooltip">Search</string>
-    <string name="settings_tooltip">Settings</string>
     <string name="back_tooltip">Back</string>
+    <string name="scroll_to_top_description">Scroll to top</string>
 
     <!-- Settings Screen -->
     <string name="settings_title">Settings</string>
+    <string name="settings_tooltip">Settings</string>
+
+    <!-- Appearance Section -->
     <string name="appearance_section">Appearance</string>
-    <string name="material_you_title">Material You</string>
     <string name="app_theme_title">App Theme</string>
     <string name="app_theme_description">Change the app\'s appearance</string>
+    <string name="material_you_title">Material You</string>
+
+    <!-- Import & Export Section -->
+    <string name="import_export_section">Import &amp; Export</string>
+    <string name="import_action">Import networks</string>
+    <string name="import_description">Import WiFi networks from a JSON file</string>
+    <string name="export_action">Export networks</string>
+    <string name="export_description">Export WiFi networks to a JSON file</string>
 
     <!-- WiFi Network -->
     <string name="hidden_network_tooltip">Hidden network</string>
-
-    <!-- Floating Action Button Menu -->
-    <string name="more_options_description">More options</string>
-    <string name="import_action">Import</string>
-    <string name="export_action">Export</string>
-
-    <!-- Loading Dialog -->
-    <string name="loading_message">Loading…</string>
-
-    <!-- Shizuku Permission Dialog -->
-    <string name="shizuku_required_title">Shizuku Required</string>
-    <string name="shizuku_required_message">Shizuku is required to use this app. If you have Shizuku installed, please start it. Otherwise, you can install Shizuku from the Play Store.</string>
-    <string name="open_shizuku">Open Shizuku</string>
-    <string name="install_shizuku">Install Shizuku</string>
-    <string name="cancel">Cancel</string>
 
     <!-- WiFi Card -->
     <string name="copy_action">Copy</string>
@@ -46,4 +41,14 @@
     <string name="security_wpa2">WPA/WPA2</string>
     <string name="security_wpa3">WPA3</string>
     <string name="security_wep">WEP</string>
+
+    <!-- Loading Dialog -->
+    <string name="loading_message">Loading…</string>
+
+    <!-- Shizuku Permission Dialog -->
+    <string name="shizuku_required_title">Shizuku Required</string>
+    <string name="shizuku_required_message">Shizuku is required to use this app. If you have Shizuku installed, please start it. Otherwise, you can install Shizuku from the Play Store.</string>
+    <string name="open_shizuku">Open Shizuku</string>
+    <string name="install_shizuku">Install Shizuku</string>
+    <string name="cancel">Cancel</string>
 </resources>

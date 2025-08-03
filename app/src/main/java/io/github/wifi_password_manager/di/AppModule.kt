@@ -30,6 +30,8 @@ class AppModule {
     fun mainViewModel(wifiService: WifiService): MainViewModel = MainViewModel(wifiService)
 
     @KoinViewModel
-    fun settingViewModel(settingService: SettingService): SettingViewModel =
-        SettingViewModel(settingService)
+    fun settingViewModel(
+        settingService: SettingService,
+        wifiService: WifiService,
+    ): SettingViewModel = SettingViewModel(settingService, wifiService)
 }

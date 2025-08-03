@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -21,14 +22,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.github.wifi_password_manager.R
-import io.github.wifi_password_manager.data.Settings
 import io.github.wifi_password_manager.navigation.LocalNavBackStack
 import io.github.wifi_password_manager.ui.screen.setting.components.ThemeModeItem
+import io.github.wifi_password_manager.ui.shared.LoadingDialog
 import io.github.wifi_password_manager.ui.theme.WiFiPasswordManagerTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingView(state: Settings, onEvent: (SettingViewModel.Event) -> Unit) {
+fun SettingView(state: SettingViewModel.State, onEvent: (SettingViewModel.Event) -> Unit) {
     val navBackStack = LocalNavBackStack.current
 
     Scaffold(
@@ -47,13 +48,14 @@ fun SettingView(state: Settings, onEvent: (SettingViewModel.Event) -> Unit) {
         }
     ) { innerPadding ->
         Column(modifier = Modifier.padding(innerPadding)) {
+            // Appearance Section
             Text(
                 text = stringResource(R.string.appearance_section),
                 color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(start = 16.dp),
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             )
 
-            ThemeModeItem(themeMode = state.themeMode) {
+            ThemeModeItem(themeMode = state.settings.themeMode) {
                 onEvent(SettingViewModel.Event.UpdateThemeMode(it))
             }
 
@@ -61,12 +63,16 @@ fun SettingView(state: Settings, onEvent: (SettingViewModel.Event) -> Unit) {
                 ListItem(
                     modifier =
                         Modifier.clickable {
-                            onEvent(SettingViewModel.Event.ToggleMaterialYou(!state.useMaterialYou))
+                            onEvent(
+                                SettingViewModel.Event.ToggleMaterialYou(
+                                    !state.settings.useMaterialYou
+                                )
+                            )
                         },
                     headlineContent = { Text(text = stringResource(R.string.material_you_title)) },
                     trailingContent = {
                         Switch(
-                            checked = state.useMaterialYou,
+                            checked = state.settings.useMaterialYou,
                             onCheckedChange = {
                                 onEvent(SettingViewModel.Event.ToggleMaterialYou(it))
                             },
@@ -74,6 +80,31 @@ fun SettingView(state: Settings, onEvent: (SettingViewModel.Event) -> Unit) {
                     },
                 )
             }
+
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+
+            // Import & Export Section
+            Text(
+                text = stringResource(R.string.import_export_section),
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            )
+
+            ListItem(
+                modifier = Modifier.clickable { onEvent(SettingViewModel.Event.ImportNetworks) },
+                headlineContent = { Text(text = stringResource(R.string.import_action)) },
+                supportingContent = { Text(text = stringResource(R.string.import_description)) },
+            )
+
+            ListItem(
+                modifier = Modifier.clickable { onEvent(SettingViewModel.Event.ExportNetworks) },
+                headlineContent = { Text(text = stringResource(R.string.export_action)) },
+                supportingContent = { Text(text = stringResource(R.string.export_description)) },
+            )
+        }
+
+        if (state.isLoading) {
+            LoadingDialog()
         }
     }
 }
@@ -81,5 +112,5 @@ fun SettingView(state: Settings, onEvent: (SettingViewModel.Event) -> Unit) {
 @Preview
 @Composable
 private fun SettingViewPreview() {
-    WiFiPasswordManagerTheme { SettingView(state = Settings(), onEvent = {}) }
+    WiFiPasswordManagerTheme { SettingView(state = SettingViewModel.State(), onEvent = {}) }
 }

@@ -9,10 +9,14 @@ import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -26,7 +30,12 @@ import io.github.wifi_password_manager.utils.MOCK
 import io.github.wifi_password_manager.utils.plus
 
 @Composable
-fun NetworkList(modifier: Modifier = Modifier, networks: List<WifiNetwork>) {
+fun NetworkList(
+    modifier: Modifier = Modifier,
+    networks: List<WifiNetwork>,
+    listState: LazyListState = rememberLazyListState(),
+    gridState: LazyGridState = rememberLazyGridState(),
+) {
     val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
     val deviceConfiguration = DeviceConfiguration.fromWindowSizeClass(windowSizeClass)
 
@@ -34,6 +43,7 @@ fun NetworkList(modifier: Modifier = Modifier, networks: List<WifiNetwork>) {
         DeviceConfiguration.MOBILE_PORTRAIT -> {
             LazyColumn(
                 modifier = modifier,
+                state = listState,
                 contentPadding =
                     WindowInsets.navigationBars.asPaddingValues() + PaddingValues(12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -46,6 +56,7 @@ fun NetworkList(modifier: Modifier = Modifier, networks: List<WifiNetwork>) {
         DeviceConfiguration.TABLET_PORTRAIT -> {
             LazyVerticalGrid(
                 modifier = modifier,
+                state = gridState,
                 columns = GridCells.Fixed(2),
                 contentPadding =
                     WindowInsets.displayCutout
@@ -64,6 +75,7 @@ fun NetworkList(modifier: Modifier = Modifier, networks: List<WifiNetwork>) {
         else -> {
             LazyVerticalGrid(
                 modifier = modifier,
+                state = gridState,
                 columns = GridCells.Adaptive(400.dp),
                 contentPadding =
                     WindowInsets.displayCutout
