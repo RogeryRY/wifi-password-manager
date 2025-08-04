@@ -17,7 +17,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -121,7 +121,7 @@ fun MainView(state: MainViewModel.State, onEvent: (MainViewModel.Event) -> Unit)
                             ) {
                                 IconButton(onClick = { navBackStack.add(SettingScreen) }) {
                                     Icon(
-                                        imageVector = Icons.Filled.Settings,
+                                        imageVector = Icons.Outlined.Settings,
                                         contentDescription =
                                             stringResource(R.string.settings_tooltip),
                                     )

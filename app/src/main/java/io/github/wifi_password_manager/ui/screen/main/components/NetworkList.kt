@@ -48,27 +48,12 @@ fun NetworkList(
                     WindowInsets.navigationBars.asPaddingValues() + PaddingValues(12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                items(items = networks, key = { it.ssid }) { network ->
+                items(
+                    items = networks,
+                    key = { it.ssid },
+                    contentType = { it.password.isEmpty() },
+                ) { network ->
                     WifiCard(network = network)
-                }
-            }
-        }
-        DeviceConfiguration.TABLET_PORTRAIT -> {
-            LazyVerticalGrid(
-                modifier = modifier,
-                state = gridState,
-                columns = GridCells.Fixed(2),
-                contentPadding =
-                    WindowInsets.displayCutout
-                        .only(WindowInsetsSides.Horizontal)
-                        .asPaddingValues() +
-                        WindowInsets.navigationBars.asPaddingValues() +
-                        PaddingValues(12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                items(items = networks, key = { it.ssid }) { network ->
-                    WifiCard(network = network, expanded = true)
                 }
             }
         }
@@ -76,7 +61,10 @@ fun NetworkList(
             LazyVerticalGrid(
                 modifier = modifier,
                 state = gridState,
-                columns = GridCells.Adaptive(400.dp),
+                columns =
+                    if (deviceConfiguration == DeviceConfiguration.TABLET_PORTRAIT)
+                        GridCells.Fixed(2)
+                    else GridCells.Adaptive(400.dp),
                 contentPadding =
                     WindowInsets.displayCutout
                         .only(WindowInsetsSides.Horizontal)
@@ -86,7 +74,11 @@ fun NetworkList(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                items(items = networks, key = { it.ssid }) { network ->
+                items(
+                    items = networks,
+                    key = { it.ssid },
+                    contentType = { it.password.isEmpty() },
+                ) { network ->
                     WifiCard(network = network, expanded = true)
                 }
             }
