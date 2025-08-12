@@ -6,7 +6,7 @@
     <string name="search_hint">Find by SSID</string>
     <string name="search_tooltip">Search</string>
     <string name="back_tooltip">Back</string>
-    <string name="scroll_to_top_description">Scroll to top</string>
+    <string name="refresh_description">Refresh</string>
 
     <!-- Settings Screen -->
     <string name="settings_title">Settings</string>

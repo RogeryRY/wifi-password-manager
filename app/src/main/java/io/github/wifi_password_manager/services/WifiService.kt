@@ -18,6 +18,8 @@ import io.github.wifi_password_manager.utils.hasShizukuPermission
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import moe.shizuku.server.IShizukuService
@@ -33,6 +35,9 @@ class WifiService(private val context: Context, private val json: Json) {
 
         private const val SHELL_PACKAGE = "com.android.shell"
     }
+
+    private val _configuredNetworks = MutableSharedFlow<List<WifiNetwork>>()
+    val configuredNetworks = _configuredNetworks.asSharedFlow()
 
     private val wifiManager by lazy {
         SystemServiceHelper.getSystemService(Context.WIFI_SERVICE)
@@ -65,32 +70,29 @@ class WifiService(private val context: Context, private val json: Json) {
         }
     }
 
-    fun getPrivilegedConfiguredNetworks(): List<WifiNetwork> {
-        if (!context.hasShizukuPermission) {
-            Log.w(TAG, "Shizuku permission not available, returning empty list")
-            return emptyList()
-        }
+    suspend fun refresh() {
+        val networks = getPrivilegedConfiguredNetworks()
+        _configuredNetworks.emit(value = networks)
+    }
 
-        return runCatching {
-                val configs =
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                        wifiManager
-                            .getPrivilegedConfiguredNetworks(
-                                user,
-                                SHELL_PACKAGE,
-                                Bundle().apply {
-                                    putParcelable(
-                                        "EXTRA_PARAM_KEY_ATTRIBUTION_SOURCE",
-                                        attributionSource,
-                                    )
-                                },
-                            )
-                            ?.list
-                    } else {
-                        wifiManager.getPrivilegedConfiguredNetworks(user, SHELL_PACKAGE)?.list
-                    }
-                configs?.forEach { Log.d(TAG, it.toString()) }
-                configs
+    fun getPrivilegedConfiguredNetworks(): List<WifiNetwork> =
+        runCatching {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    wifiManager
+                        .getPrivilegedConfiguredNetworks(
+                            user,
+                            SHELL_PACKAGE,
+                            Bundle().apply {
+                                putParcelable(
+                                    "EXTRA_PARAM_KEY_ATTRIBUTION_SOURCE",
+                                    attributionSource,
+                                )
+                            },
+                        )
+                        ?.list
+                } else {
+                    wifiManager.getPrivilegedConfiguredNetworks(user, SHELL_PACKAGE)?.list
+                }
             }
             .fold(
                 onSuccess = { configurations ->
@@ -104,7 +106,6 @@ class WifiService(private val context: Context, private val json: Json) {
                     emptyList()
                 },
             )
-    }
 
     suspend fun addOrUpdateNetworks(networks: List<WifiNetwork>) {
         if (!context.hasShizukuPermission) {
@@ -129,12 +130,15 @@ class WifiService(private val context: Context, private val json: Json) {
                 }
             }
             .fold(
-                onSuccess = { Log.d(TAG, "Networks added or updated") },
+                onSuccess = {
+                    refresh()
+                    Log.d(TAG, "Networks added or updated")
+                },
                 onFailure = { Log.e(TAG, "Error adding or updating networks", it) },
             )
     }
 
-    fun removeNetwork(netId: Int) {
+    suspend fun removeNetwork(netId: Int) {
         if (!context.hasShizukuPermission) {
             Log.w(TAG, "Shizuku permission not available, cannot remove network")
             return
@@ -142,7 +146,10 @@ class WifiService(private val context: Context, private val json: Json) {
 
         runCatching { execute("cmd wifi forget-network $netId") }
             .fold(
-                onSuccess = { Log.d(TAG, "Network removed: $netId") },
+                onSuccess = {
+                    refresh()
+                    Log.d(TAG, "Network removed: $netId")
+                },
                 onFailure = { Log.e(TAG, "Error removing network", it) },
             )
     }

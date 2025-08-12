@@ -9,14 +9,10 @@ import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -30,12 +26,7 @@ import io.github.wifi_password_manager.utils.MOCK
 import io.github.wifi_password_manager.utils.plus
 
 @Composable
-fun NetworkList(
-    modifier: Modifier = Modifier,
-    networks: List<WifiNetwork>,
-    listState: LazyListState = rememberLazyListState(),
-    gridState: LazyGridState = rememberLazyGridState(),
-) {
+fun NetworkList(modifier: Modifier = Modifier, networks: List<WifiNetwork>) {
     val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
     val deviceConfiguration = DeviceConfiguration.fromWindowSizeClass(windowSizeClass)
 
@@ -43,7 +34,6 @@ fun NetworkList(
         DeviceConfiguration.MOBILE_PORTRAIT -> {
             LazyColumn(
                 modifier = modifier,
-                state = listState,
                 contentPadding =
                     WindowInsets.navigationBars.asPaddingValues() + PaddingValues(12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -60,7 +50,6 @@ fun NetworkList(
         else -> {
             LazyVerticalGrid(
                 modifier = modifier,
-                state = gridState,
                 columns =
                     if (deviceConfiguration == DeviceConfiguration.TABLET_PORTRAIT)
                         GridCells.Fixed(2)
