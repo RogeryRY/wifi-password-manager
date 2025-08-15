@@ -7,11 +7,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavBackStack
-import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.runtime.entry
+import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.runtime.rememberSavedStateNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import androidx.navigation3.ui.rememberSceneSetupNavEntryDecorator
 import io.github.wifi_password_manager.ui.screen.main.MainView
 import io.github.wifi_password_manager.ui.screen.main.MainViewModel
 import io.github.wifi_password_manager.ui.screen.setting.SettingView
@@ -28,29 +32,32 @@ fun NavigationRoot(modifier: Modifier = Modifier) {
     val backStack = rememberNavBackStack(MainScreen)
 
     CompositionLocalProvider(LocalNavBackStack provides backStack) {
-        NavDisplay(modifier = modifier, backStack = LocalNavBackStack.current) { key ->
-            when (key) {
-                is MainScreen -> {
-                    NavEntry(key = key) {
+        NavDisplay(
+            modifier = modifier,
+            backStack = LocalNavBackStack.current,
+            entryDecorators =
+                listOf(
+                    rememberSavedStateNavEntryDecorator(),
+                    rememberSceneSetupNavEntryDecorator(),
+                    rememberViewModelStoreNavEntryDecorator(),
+                ),
+            entryProvider =
+                entryProvider {
+                    entry<MainScreen> {
                         val viewModel = koinViewModel<MainViewModel>()
                         val state by viewModel.state.collectAsStateWithLifecycle()
 
                         MainView(state = state, onEvent = viewModel::onEvent)
                     }
-                }
 
-                is SettingScreen -> {
-                    NavEntry(key = key) {
+                    entry<SettingScreen> {
                         val viewModel = koinViewModel<SettingViewModel>()
                         val state by viewModel.state.collectAsStateWithLifecycle()
 
                         SettingView(state = state, onEvent = viewModel::onEvent)
                     }
-                }
-
-                else -> throw RuntimeException("Invalid NavKey.")
-            }
-        }
+                },
+        )
     }
 }
 
