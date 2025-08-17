@@ -8,13 +8,16 @@ import dev.rikka.tools.refine.Refine
 import io.github.wifi_password_manager.data.WifiNetwork
 import io.github.wifi_password_manager.data.WifiNetwork.SecurityType
 import kotlin.random.Random
+import kotlinx.collections.immutable.persistentSetOf
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toImmutableSet
 
 fun WifiNetwork.Companion.fromWifiConfiguration(config: WifiConfiguration): WifiNetwork {
     val network = Refine.unsafeCast<WifiConfigurationHidden>(config)
     return WifiNetwork(
         networkId = network.networkId,
         ssid = network.SSID.stripQuotes(),
-        securityType = setOf(network.securityType),
+        securityType = persistentSetOf(network.securityType),
         password = network.simpleKey,
         hidden = network.hiddenSSID,
         autojoin = network.allowAutojoin,
@@ -24,19 +27,20 @@ fun WifiNetwork.Companion.fromWifiConfiguration(config: WifiConfiguration): Wifi
 val WifiNetwork.Companion.MOCK
     get() =
         List(20) {
-            val type = SecurityType.entries.random()
-            WifiNetwork(
-                ssid = "ssid $it",
-                password =
-                    if (type !in setOf(SecurityType.OWE, SecurityType.OPEN)) {
-                        "password $it"
-                    } else {
-                        ""
-                    },
-                securityType = setOf(type),
-                hidden = Random.nextBoolean(),
-            )
-        }
+                val type = SecurityType.entries.random()
+                WifiNetwork(
+                    ssid = "ssid $it",
+                    password =
+                        if (type !in setOf(SecurityType.OWE, SecurityType.OPEN)) {
+                            "password $it"
+                        } else {
+                            ""
+                        },
+                    securityType = persistentSetOf(type),
+                    hidden = Random.nextBoolean(),
+                )
+            }
+            .toImmutableList()
 
 fun List<WifiNetwork>.groupAndSortedBySsid(): List<WifiNetwork> =
     groupBy { it.ssid }
@@ -45,7 +49,7 @@ fun List<WifiNetwork>.groupAndSortedBySsid(): List<WifiNetwork> =
             WifiNetwork(
                 networkId = duplicateNetworks.first().networkId,
                 ssid = duplicateNetworks.first().ssid,
-                securityType = duplicateNetworks.flatMap { it.securityType }.toSet(),
+                securityType = duplicateNetworks.flatMap { it.securityType }.toImmutableSet(),
                 password =
                     duplicateNetworks.firstOrNull { it.password.isNotEmpty() }?.password ?: "",
                 hidden = duplicateNetworks.any { it.hidden },

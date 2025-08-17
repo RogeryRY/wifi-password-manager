@@ -5,6 +5,8 @@ package io.github.wifi_password_manager.data
 import android.content.Context
 import androidx.annotation.StringRes
 import io.github.wifi_password_manager.R
+import io.github.wifi_password_manager.utils.ImmutableSetSerializer
+import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -13,7 +15,9 @@ import kotlinx.serialization.Transient
 data class WifiNetwork(
     @Transient val networkId: Int = -1,
     val ssid: String,
-    @SerialName("security") val securityType: Set<SecurityType>,
+    @SerialName("security")
+    @Serializable(with = ImmutableSetSerializer::class)
+    val securityType: ImmutableSet<SecurityType>,
     val password: String,
     val hidden: Boolean = false,
     val autojoin: Boolean = true,

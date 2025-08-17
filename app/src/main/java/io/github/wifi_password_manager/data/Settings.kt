@@ -2,6 +2,7 @@ package io.github.wifi_password_manager.data
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -17,6 +18,7 @@ data class Settings(
 
         val isDark: Boolean
             @Composable
+            @ReadOnlyComposable
             get() =
                 when (this) {
                     LIGHT -> false

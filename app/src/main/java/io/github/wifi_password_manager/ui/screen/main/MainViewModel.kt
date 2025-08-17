@@ -1,12 +1,16 @@
 package io.github.wifi_password_manager.ui.screen.main
 
 import android.util.Log
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.wifi_password_manager.data.WifiNetwork
 import io.github.wifi_password_manager.services.WifiService
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -28,8 +32,9 @@ class MainViewModel(private val wifiService: WifiService) : ViewModel() {
         private const val TAG = "MainViewModel"
     }
 
+    @Immutable
     data class State(
-        val savedNetworks: List<WifiNetwork> = emptyList(),
+        val savedNetworks: ImmutableList<WifiNetwork> = persistentListOf(),
         val showingSearch: Boolean = false,
         val searchText: String = "",
     )
@@ -65,7 +70,9 @@ class MainViewModel(private val wifiService: WifiService) : ViewModel() {
                         .sortedBy { it.ssid.lowercase() }
                 }
             }
-            .onEach { networks -> _state.update { it.copy(savedNetworks = networks) } }
+            .onEach { networks ->
+                _state.update { it.copy(savedNetworks = networks.toImmutableList()) }
+            }
             .launchIn(viewModelScope)
 
         state

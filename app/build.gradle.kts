@@ -117,6 +117,7 @@ dependencies {
     implementation(libs.filekit.dialogs)
 
     // KotlinX
+    implementation(libs.kotlinx.collections.immutable)
     implementation(libs.kotlinx.datetime)
     implementation(libs.kotlinx.serialization.json)
 
