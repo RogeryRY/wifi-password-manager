@@ -18,6 +18,7 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSavedStateNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import androidx.navigation3.ui.rememberSceneSetupNavEntryDecorator
+import io.github.wifi_password_manager.ui.screen.license.LicenseView
 import io.github.wifi_password_manager.ui.screen.main.MainView
 import io.github.wifi_password_manager.ui.screen.main.MainViewModel
 import io.github.wifi_password_manager.ui.screen.setting.SettingView
@@ -30,6 +31,8 @@ import org.koin.compose.viewmodel.koinViewModel
 @Serializable data object MainScreen : NavKey
 
 @Serializable data object SettingScreen : NavKey
+
+@Serializable data object LicenseScreen : NavKey
 
 @Composable
 fun NavigationRoot(modifier: Modifier = Modifier) {
@@ -83,6 +86,8 @@ fun NavigationRoot(modifier: Modifier = Modifier) {
 
                         SettingView(state = state, onAction = viewModel::onAction)
                     }
+
+                    entry<LicenseScreen> { LicenseView() }
                 },
         )
     }

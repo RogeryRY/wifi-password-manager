@@ -26,6 +26,7 @@ import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
 import io.github.wifi_password_manager.BuildConfig
 import io.github.wifi_password_manager.R
+import io.github.wifi_password_manager.navigation.LicenseScreen
 import io.github.wifi_password_manager.navigation.LocalNavBackStack
 import io.github.wifi_password_manager.ui.screen.setting.components.ForgetAllConfirmDialog
 import io.github.wifi_password_manager.ui.screen.setting.components.SettingSection
@@ -45,7 +46,7 @@ fun SettingView(state: SettingViewModel.State, onAction: (SettingViewModel.Actio
                     IconButton(onClick = { navBackStack.removeLastOrNull() }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = stringResource(R.string.back_tooltip),
                         )
                     }
                 },
@@ -140,6 +141,16 @@ fun SettingView(state: SettingViewModel.State, onAction: (SettingViewModel.Actio
             // About Section
             item {
                 SettingSection(title = stringResource(R.string.about_section)) {
+                    ListItem(
+                        modifier = Modifier.clickable { navBackStack.add(LicenseScreen) },
+                        headlineContent = { Text(text = stringResource(R.string.license_title)) },
+                        supportingContent = {
+                            Text(text = stringResource(R.string.license_description))
+                        },
+                    )
+
+                    HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainer)
+
                     ListItem(
                         headlineContent = { Text(text = stringResource(R.string.version_title)) },
                         supportingContent = { Text(text = BuildConfig.VERSION_NAME) },
