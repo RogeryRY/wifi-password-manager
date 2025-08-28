@@ -1,9 +1,13 @@
-name: Build & deploy Android app
+name: Build & Deploy Android app
 
 on:
   push:
     tags:
-      - '*'
+      - 'v*'
+  workflow_dispatch:
+
+permissions: 
+  contents: write
 
 jobs:
   build:
@@ -16,19 +20,9 @@ jobs:
       - name: Setup Java
         uses: actions/setup-java@v5
         with:
-          java-version: 17
+          java-version: 21
           cache: gradle
           distribution: temurin
-
-      - name: Cache Gradle packages
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
 
       - name: Change wrapper permissions
         run: chmod +x ./gradlew
@@ -48,8 +42,21 @@ jobs:
       - name: Create Release APK
         run: ./gradlew assembleRelease
 
-      - name: Upload Release APK
+      - name: Get latest tag
+        run: echo "TAG=${{ github.ref_name }}" >> $GITHUB_ENV
+
+      - name: Upload build artifact
         uses: actions/upload-artifact@v4.6.2
         with:
           name: app-release.apk
-          path: app/build/outputs/apk/release/app-release.apk
+          path: ./app/build/outputs/apk/release/app-release.apk
+
+      - name: Create GitHub Release
+        run: |
+          gh release create "$TAG" \
+            --verify-tag \
+            --title "$TAG" \
+            --generate-notes \
+            ./app/build/outputs/apk/release/app-release.apk
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
