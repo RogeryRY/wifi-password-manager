@@ -5,6 +5,7 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
@@ -29,9 +30,12 @@ import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.compose.ui.unit.dp
 import io.github.wifi_password_manager.R
 import io.github.wifi_password_manager.data.WifiNetwork
 import io.github.wifi_password_manager.navigation.LocalNavBackStack
@@ -132,10 +136,29 @@ fun MainView(state: MainViewModel.State, onAction: (MainViewModel.Action) -> Uni
         },
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
     ) { innerPadding ->
-        NetworkList(
-            modifier = Modifier.fillMaxSize().padding(innerPadding).imePadding(),
-            networks = state.savedNetworks,
-        )
+        val modifier = Modifier.fillMaxSize().padding(innerPadding).imePadding()
+
+        if (state.savedNetworks.isEmpty()) {
+            Box(modifier = modifier, contentAlignment = Alignment.Center) {
+                if (state.showingSearch) {
+                    Text(
+                        text = stringResource(R.string.no_networks_found),
+                        style = MaterialTheme.typography.headlineSmall,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 32.dp),
+                    )
+                } else {
+                    Text(
+                        text = stringResource(R.string.no_networks_available),
+                        style = MaterialTheme.typography.headlineSmall,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 32.dp),
+                    )
+                }
+            }
+        } else {
+            NetworkList(modifier = modifier, networks = state.savedNetworks)
+        }
     }
 }
 
@@ -149,7 +172,24 @@ private fun MainViewPreview() {
 
 @PreviewLightDark
 @Composable
+private fun EmptyMainViewPreview() {
+    WiFiPasswordManagerTheme { MainView(state = MainViewModel.State(), onAction = {}) }
+}
+
+@PreviewLightDark
+@Composable
 private fun SearchMainViewPreview() {
+    WiFiPasswordManagerTheme {
+        MainView(
+            state = MainViewModel.State(showingSearch = true, savedNetworks = WifiNetwork.MOCK),
+            onAction = {},
+        )
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun EmptySearchMainViewPreview() {
     WiFiPasswordManagerTheme {
         MainView(state = MainViewModel.State(showingSearch = true), onAction = {})
     }
