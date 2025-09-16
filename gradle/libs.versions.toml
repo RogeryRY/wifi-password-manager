@@ -1,31 +1,32 @@
 [versions]
-aboutLibraries = "13.0.0-b01"
-activity = "1.12.0-alpha06"
-agp = "8.12.1"
+aboutLibraries = "13.0.0-rc01"
+activity = "1.12.0-alpha08"
+agp = "8.13.0"
 annotation = "1.9.1"
 appcompat = "1.7.1"
-composeBom = "2025.08.00"
+composeBom = "2025.09.00"
 core = "1.17.0"
 coreSplashScreen = "1.2.0-rc01"
 datastore = "1.2.0-alpha02"
 espressoCore = "3.7.0"
-filekit = "0.10.0"
+filekit = "0.11.0"
 hiddenapibypass = "6.1"
 junit = "4.13.2"
 junitVersion = "1.3.0"
-koin = "4.1.0"
-koinAnnotations = "2.1.0"
-kotlin = "2.2.10"
+koin = "4.1.1"
+koinAnnotations = "2.2.0-RC1"
+kotlin = "2.2.20"
 kotlinxCollectionsImmutable = "0.4.0"
 kotlinxDatetime = "0.7.1"
 kotlinxSerialization = "1.9.0"
-ksp = "2.2.10-2.0.2"
-ktfmt = "0.23.0"
-lifecycle = "2.9.2"
-material3 = "1.5.0-alpha02"
-material3Adaptive = "1.2.0-alpha11"
-materialComponents = "1.12.0"
-navigation3 = "1.0.0-alpha07"
+ksp = "2.2.20-2.0.2"
+ktfmt = "0.24.0"
+lifecycle = "2.9.3"
+material3 = "1.5.0-alpha04"
+material3Adaptive = "1.2.0-beta02"
+material3AdaptiveNavigaton3 = "1.0.0-alpha02"
+materialComponents = "1.13.0"
+navigation3 = "1.0.0-alpha09"
 navigation3Lifecycle = "1.0.0-alpha04"
 qrose = "1.0.1"
 refine = "4.4.0"
@@ -49,7 +50,7 @@ androidx-material-icons-extended = { group = "androidx.compose.material", name =
 androidx-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
 androidx-material3-adaptive = { group = "androidx.compose.material3.adaptive", name = "adaptive", version.ref = "material3Adaptive" }
 androidx-material3-adaptive-layout = { group = "androidx.compose.material3.adaptive", name = "adaptive-layout", version.ref = "material3Adaptive" }
-androidx-material3-adaptive-navigation = { group = "androidx.compose.material3.adaptive", name = "adaptive-navigation", version.ref = "material3Adaptive" }
+androidx-material3-adaptive-navigation3 = { group = "androidx.compose.material3.adaptive", name = "adaptive-navigation3", version.ref = "material3AdaptiveNavigaton3" }
 androidx-navigation3-runtime = { group = "androidx.navigation3", name = "navigation3-runtime", version.ref = "navigation3" }
 androidx-navigation3-ui = { group = "androidx.navigation3", name = "navigation3-ui", version.ref = "navigation3" }
 androidx-ui = { group = "androidx.compose.ui", name = "ui" }

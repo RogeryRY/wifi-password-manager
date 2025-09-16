@@ -5,7 +5,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -93,4 +92,4 @@ fun NavigationRoot(modifier: Modifier = Modifier) {
     }
 }
 
-val LocalNavBackStack = compositionLocalOf<NavBackStack> { mutableStateListOf() }
+val LocalNavBackStack = compositionLocalOf { NavBackStack<NavKey>() }

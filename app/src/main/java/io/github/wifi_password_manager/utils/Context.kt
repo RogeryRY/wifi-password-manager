@@ -27,8 +27,5 @@ fun Context.launchUrl(url: String) {
     } catch (_: Exception) {}
 }
 
-fun Context.toast(text: String, duration: Int = Toast.LENGTH_SHORT) =
-    Toast.makeText(this, text, duration).show()
-
 fun Context.toast(@StringRes resId: Int, duration: Int = Toast.LENGTH_SHORT) =
     Toast.makeText(this, resId, duration).show()
