@@ -4,9 +4,12 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.vinceglb.filekit.FileKit
+import io.github.vinceglb.filekit.PlatformFile
+import io.github.vinceglb.filekit.dialogs.FileKitMode
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.openFilePicker
 import io.github.vinceglb.filekit.dialogs.openFileSaver
+import io.github.vinceglb.filekit.name
 import io.github.vinceglb.filekit.readString
 import io.github.vinceglb.filekit.writeString
 import io.github.wifi_password_manager.R
@@ -120,28 +123,47 @@ class SettingViewModel(
     }
 
     private suspend fun importNetworks() {
-        val file = FileKit.openFilePicker(type = FileKitType.File("json")) ?: return
+        val files =
+            FileKit.openFilePicker(mode = FileKitMode.Multiple(), type = FileKitType.File("json"))
+                ?.takeIf { it.isNotEmpty() } ?: return
 
         _state.update { it.copy(isLoading = true) }
 
         try {
-            Dispatchers.IO {
-                val networks = wifiService.getNetworks(file.readString())
-                if (networks.isNotEmpty()) {
-                    wifiService.addOrUpdateNetworks(networks)
-                }
+            if (files.size == 1) {
+                importSingleFile(files.first())
+            } else {
+                importMultipleFiles(files)
             }
+            _event.emit(Event.ShowMessage(R.string.import_networks_success))
         } catch (e: SerializationException) {
             Log.e(TAG, "Error parsing JSON", e)
-
-            _state.update { it.copy(isLoading = false) }
             _event.emit(Event.ShowMessage(R.string.invalid_json))
+        } finally {
+            _state.update { it.copy(isLoading = false) }
+        }
+    }
 
-            return
+    private suspend fun importSingleFile(file: PlatformFile) =
+        Dispatchers.IO {
+            val networks = wifiService.getNetworks(file.readString())
+            if (networks.isNotEmpty()) wifiService.addOrUpdateNetworks(networks)
         }
 
-        _state.update { it.copy(isLoading = false) }
-        _event.emit(Event.ShowMessage(R.string.import_networks_success))
+    private suspend fun importMultipleFiles(files: List<PlatformFile>) {
+        Dispatchers.IO {
+            val allNetworks =
+                files
+                    .flatMap { file ->
+                        runCatching { wifiService.getNetworks(file.readString()) }
+                            .onFailure {
+                                Log.e(TAG, "Error parsing JSON from file: ${file.name}", it)
+                            }
+                            .getOrDefault(emptyList())
+                    }
+                    .toSet()
+            if (allNetworks.isNotEmpty()) wifiService.addOrUpdateNetworks(allNetworks)
+        }
     }
 
     private suspend fun showForgetAllDialog() {

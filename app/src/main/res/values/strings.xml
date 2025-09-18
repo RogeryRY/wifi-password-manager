@@ -28,7 +28,7 @@
     <!-- Import & Export Section -->
     <string name="import_export_section">Import &amp; Export</string>
     <string name="import_action">Import networks</string>
-    <string name="import_description">Import WiFi networks from a JSON file</string>
+    <string name="import_description">Import WiFi networks from JSON file(s)</string>
     <string name="export_action">Export networks</string>
     <string name="export_description">Export WiFi networks to a JSON file</string>
 

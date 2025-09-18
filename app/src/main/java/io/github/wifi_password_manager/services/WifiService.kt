@@ -104,7 +104,7 @@ class WifiService(private val context: Context, private val json: Json) {
             )
     }
 
-    suspend fun addOrUpdateNetworks(networks: List<WifiNetwork>) {
+    suspend fun addOrUpdateNetworks(networks: Collection<WifiNetwork>) {
         if (!context.hasShizukuPermission) {
             Log.w(TAG, "Shizuku permission not available, cannot add/update networks")
             return
