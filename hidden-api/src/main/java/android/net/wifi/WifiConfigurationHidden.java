@@ -3,6 +3,7 @@ package android.net.wifi;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import androidx.annotation.IntRange;
 import androidx.annotation.NonNull;
 
 import java.util.BitSet;
@@ -65,6 +66,14 @@ public class WifiConfigurationHidden implements Parcelable {
     public String[] wepKeys;
 
     /**
+     * Default WEP key index, ranging from 0 to 3.
+     * Due to security and performance limitations, use of WEP networks
+     * is discouraged.
+     */
+    @IntRange(from = 0, to = 3)
+    public int wepTxKeyIndex;
+
+    /**
      * This is a network that does not broadcast its SSID, so an
      * SSID-specific probe request must be used for scans.
      */
@@ -77,6 +86,53 @@ public class WifiConfigurationHidden implements Parcelable {
      */
     @NonNull
     public BitSet allowedKeyManagement;
+
+    /**
+     * The set of security protocols supported by this configuration.
+     * See {@link WifiConfiguration.Protocol} for descriptions of the values.
+     * Defaults to WPA RSN.
+     */
+    @NonNull
+    public BitSet allowedProtocols;
+
+    /**
+     * The set of authentication protocols supported by this configuration.
+     * See {@link WifiConfiguration.AuthAlgorithm} for descriptions of the values.
+     * Defaults to automatic selection.
+     */
+    @NonNull
+    public BitSet allowedAuthAlgorithms;
+
+    /**
+     * The set of pairwise ciphers for WPA supported by this configuration.
+     * See {@link WifiConfiguration.PairwiseCipher} for descriptions of the values.
+     * Defaults to CCMP TKIP.
+     */
+    @NonNull
+    public BitSet allowedPairwiseCiphers;
+
+    /**
+     * The set of group ciphers supported by this configuration.
+     * See {@link WifiConfiguration.GroupCipher} for descriptions of the values.
+     * Defaults to CCMP TKIP WEP104 WEP40.
+     */
+    @NonNull
+    public BitSet allowedGroupCiphers;
+
+    /**
+     * The set of group management ciphers supported by this configuration.
+     * See {@link WifiConfiguration.GroupMgmtCipher} for descriptions of the values.
+     */
+    @NonNull
+    public BitSet allowedGroupManagementCiphers;
+
+    /**
+     * The set of SuiteB ciphers supported by this configuration.
+     * To be used for WPA3-Enterprise mode. Set automatically by the framework based on the
+     * certificate type that is used in this configuration.
+     */
+    @NonNull
+    public BitSet allowedSuiteBCiphers;
 
     /**
      * True if this network configuration is visible to and usable by other users on the
@@ -96,6 +152,22 @@ public class WifiConfigurationHidden implements Parcelable {
      */
     @NonNull
     public String getPrintableSsid() {
+        throw new RuntimeException("Stub!");
+    }
+
+    /**
+     * Get the authentication type of the network.
+     *
+     * @return One of the {@link WifiConfiguration.KeyMgmt} constants. e.g. {@link WifiConfiguration.KeyMgmt#WPA2_PSK}.
+     */
+    public int getAuthType() {
+        throw new RuntimeException("Stub!");
+    }
+
+    /**
+     * return the SSID + security type in String format.
+     */
+    public String getSsidAndSecurityTypeString() {
         throw new RuntimeException("Stub!");
     }
 

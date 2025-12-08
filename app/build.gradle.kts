@@ -11,6 +11,7 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.ktfmt.gradle)
     alias(libs.plugins.refine)
+    alias(libs.plugins.stability.analyzer)
 }
 
 kotlin {
@@ -24,7 +25,7 @@ kotlin {
 
 android {
     namespace = "io.github.wifi_password_manager"
-    compileSdk = 36
+    compileSdk { version = release(36) }
 
     defaultConfig {
         applicationId = "io.github.wifi_password_manager"
@@ -86,7 +87,6 @@ ksp {
     arg("KOIN_CONFIG_CHECK", "true")
     arg("KOIN_DEFAULT_MODULE", "false")
     arg("KOIN_LOG_TIMES", "true")
-    arg("KOIN_USE_COMPOSE_VIEWMODEL", "true")
 }
 
 dependencies {
@@ -96,18 +96,13 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.datastore)
-    implementation(libs.androidx.lifecycle.viewmodel.navigation3)
     implementation(libs.androidx.material.icons.extended)
     implementation(libs.androidx.material3)
-    implementation(libs.androidx.material3.adaptive)
-    implementation(libs.androidx.material3.adaptive.layout)
-    implementation(libs.androidx.material3.adaptive.navigation3)
     implementation(libs.androidx.navigation3.runtime)
     implementation(libs.androidx.navigation3.ui)
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
-    implementation(libs.lifecycle.viewmodel.compose)
     implementation(platform(libs.androidx.compose.bom))
 
     // Material Components
@@ -117,20 +112,23 @@ dependencies {
     implementation(libs.filekit.core)
     implementation(libs.filekit.dialogs)
 
-    // KotlinX
+    // JetBrains
+    implementation(libs.adaptive)
+    implementation(libs.adaptive.navigation3)
     implementation(libs.kotlinx.collections.immutable)
     implementation(libs.kotlinx.datetime)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.lifecycle.viewmodel.compose)
+    implementation(libs.lifecycle.viewmodel.navigation3)
 
-    // Shizuku
-    compileOnly(project(":hidden-api"))
+    // Privileged
+    compileOnly(projects.hiddenApi)
     implementation(libs.hiddenapibypass)
     implementation(libs.refine.runtime)
     implementation(libs.shizuku.api)
     implementation(libs.shizuku.provider)
 
     // Koin
-    implementation(libs.koin.androidx.startup)
     implementation(libs.koin.annotations)
     implementation(libs.koin.compose)
     implementation(libs.koin.compose.viewmodel)
@@ -155,4 +153,5 @@ dependencies {
     // Debug
     debugImplementation(libs.androidx.ui.test.manifest)
     debugImplementation(libs.androidx.ui.tooling)
+    debugImplementation(libs.leakcanary.android)
 }

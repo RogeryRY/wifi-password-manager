@@ -11,12 +11,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
-import androidx.navigation3.runtime.entry
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
-import androidx.navigation3.runtime.rememberSavedStateNavEntryDecorator
+import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
-import androidx.navigation3.ui.rememberSceneSetupNavEntryDecorator
 import io.github.wifi_password_manager.ui.screen.license.LicenseView
 import io.github.wifi_password_manager.ui.screen.network.list.NetworkListView
 import io.github.wifi_password_manager.ui.screen.network.list.NetworkListViewModel
@@ -43,11 +41,10 @@ fun NavigationRoot(modifier: Modifier = Modifier) {
         NavDisplay(
             modifier = modifier,
             backStack = backStack,
-            onBack = { repeat(it) { if (backStack.size > 1) backStack.removeLastOrNull() } },
+            onBack = { if (backStack.size > 1) backStack.removeLastOrNull() },
             entryDecorators =
                 listOf(
-                    rememberSavedStateNavEntryDecorator(),
-                    rememberSceneSetupNavEntryDecorator(),
+                    rememberSaveableStateHolderNavEntryDecorator(),
                     rememberViewModelStoreNavEntryDecorator(),
                 ),
             entryProvider =

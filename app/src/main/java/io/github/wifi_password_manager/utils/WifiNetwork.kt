@@ -58,15 +58,9 @@ fun List<WifiNetwork>.groupAndSortedBySsid(): List<WifiNetwork> =
     groupBy { it.ssid }
         .values
         .map { duplicateNetworks ->
-            WifiNetwork(
-                networkId = duplicateNetworks.first().networkId,
-                ssid = duplicateNetworks.first().ssid,
-                securityType = duplicateNetworks.flatMap { it.securityType }.toImmutableSet(),
-                password = duplicateNetworks.first().password,
-                hidden = duplicateNetworks.first().hidden,
-                autojoin = duplicateNetworks.first().autojoin,
-                private = duplicateNetworks.first().private,
-            )
+            duplicateNetworks
+                .first()
+                .copy(securityType = duplicateNetworks.flatMap { it.securityType }.toImmutableSet())
         }
         .sortedBy { it.ssid.lowercase() }
 
@@ -106,6 +100,7 @@ fun WifiNetwork.toWifiConfigurations(): List<WifiConfiguration> {
                         } else {
                             wepKeys[0] = "\"$password\""
                         }
+                        wepTxKeyIndex = 0
                     }
                 }
                 allowAutojoin = autojoin

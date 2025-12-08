@@ -29,9 +29,7 @@ fun NetworkList(
     networks: ImmutableList<WifiNetwork>,
 ) {
     val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
-    val deviceConfiguration = DeviceConfiguration.fromWindowSizeClass(windowSizeClass)
-
-    when (deviceConfiguration) {
+    when (val deviceConfiguration = DeviceConfiguration.fromWindowSizeClass(windowSizeClass)) {
         DeviceConfiguration.MOBILE_PORTRAIT -> {
             LazyColumn(
                 modifier = modifier,

@@ -1,12 +1,12 @@
 package io.github.wifi_password_manager.ui.screen.network.list
 
 import android.util.Log
-import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.wifi_password_manager.R
 import io.github.wifi_password_manager.data.WifiNetwork
 import io.github.wifi_password_manager.services.WifiService
+import io.github.wifi_password_manager.utils.groupAndSortedBySsid
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.collections.immutable.ImmutableList
@@ -20,7 +20,7 @@ import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -35,7 +35,6 @@ class NetworkListViewModel(private val wifiService: WifiService) : ViewModel() {
         private const val TAG = "NetworkListViewModel"
     }
 
-    @Immutable
     data class State(
         val savedNetworks: ImmutableList<WifiNetwork> = persistentListOf(),
         val showingSearch: Boolean = false,
@@ -72,41 +71,36 @@ class NetworkListViewModel(private val wifiService: WifiService) : ViewModel() {
                 wifiService.configuredNetworks,
                 state.map { it.searchText }.debounce(200.milliseconds),
             ) { networks, searchText ->
-                if (searchText.isBlank()) {
-                    networks
-                } else {
-                    networks
-                        .filter { it.ssid.contains(searchText.trim(), ignoreCase = true) }
-                        .sortedBy { it.ssid.lowercase() }
-                }
+                val filteredNetwork =
+                    if (searchText.isBlank()) networks
+                    else networks.filter { it.ssid.contains(searchText.trim(), ignoreCase = true) }
+
+                filteredNetwork.groupAndSortedBySsid()
             }
+            .distinctUntilChanged()
             .onEach { networks ->
                 _state.update { it.copy(savedNetworks = networks.toImmutableList()) }
             }
-            .launchIn(viewModelScope)
-
-        state
-            .distinctUntilChangedBy { it.showingSearch }
-            .map { it.showingSearch }
-            .onEach { showing -> if (!showing) _state.update { it.copy(searchText = "") } }
             .launchIn(viewModelScope)
     }
 
     fun onAction(action: Action) {
         Log.d(TAG, "onAction: $action")
-        viewModelScope.launch {
-            when (action) {
-                is Action.Refresh -> onRefresh()
-                is Action.ToggleSearch ->
-                    _state.update { it.copy(showingSearch = !it.showingSearch) }
-
-                is Action.SearchTextChanged -> _state.update { it.copy(searchText = action.text) }
-            }
+        when (action) {
+            is Action.Refresh -> onRefresh()
+            is Action.ToggleSearch -> onToggleSearch()
+            is Action.SearchTextChanged -> _state.update { it.copy(searchText = action.text) }
         }
     }
 
-    private suspend fun onRefresh() {
-        wifiService.refresh()
-        _event.emit(Event.ShowMessage(R.string.refresh_success))
+    private fun onRefresh() {
+        viewModelScope.launch {
+            wifiService.refresh()
+            _event.emit(Event.ShowMessage(R.string.refresh_success))
+        }
+    }
+
+    private fun onToggleSearch() {
+        _state.update { it.copy(showingSearch = !it.showingSearch, searchText = "") }
     }
 }

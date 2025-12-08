@@ -13,7 +13,6 @@ import android.util.Log
 import dev.rikka.tools.refine.Refine
 import io.github.wifi_password_manager.data.WifiNetwork
 import io.github.wifi_password_manager.utils.fromWifiConfiguration
-import io.github.wifi_password_manager.utils.groupAndSortedBySsid
 import io.github.wifi_password_manager.utils.hasShizukuPermission
 import io.github.wifi_password_manager.utils.toWifiConfigurations
 import kotlinx.coroutines.Dispatchers
@@ -91,11 +90,9 @@ class WifiService(private val context: Context, private val json: Json) {
             }
             .fold(
                 onSuccess = { configurations ->
-                    configurations
-                        ?.map(WifiNetwork::fromWifiConfiguration)
-                        .orEmpty()
-                        .groupAndSortedBySsid()
-                        .also { Log.d(TAG, "Found ${it.size} networks") }
+                    configurations?.map(WifiNetwork::fromWifiConfiguration).orEmpty().also {
+                        Log.d(TAG, "Found ${it.size} networks")
+                    }
                 },
                 onFailure = {
                     Log.e(TAG, "Error getting configured networks", it)
