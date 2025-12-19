@@ -22,7 +22,7 @@ public interface IWifiManager extends IInterface {
     com.android.wifi.x.com.android.modules.utils.ParceledListSlice<WifiConfiguration> getPrivilegedConfiguredNetworks(String packageName, String featureId, Bundle extras);
 
     //Android 11
-    android.content.pm.ParceledListSlice<WifiConfiguration> getPrivilegedConfiguredNetworks(String packageName, String featureId);
+    com.android.wifi.x.android.content.pm.ParceledListSlice<WifiConfiguration> getPrivilegedConfiguredNetworks(String packageName, String featureId);
 
     //Android 12+
     @RequiresApi(Build.VERSION_CODES.S)

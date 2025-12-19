@@ -1,4 +1,4 @@
-package com.android.wifi.x.com.android.modules.utils;
+package com.android.wifi.x.android.content.pm;
 
 import java.util.List;
 
