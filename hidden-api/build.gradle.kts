@@ -30,5 +30,6 @@ android {
 dependencies {
     annotationProcessor(libs.refine.annotation.processor)
     compileOnly(libs.refine.annotation)
+    compileOnly(libs.stub)
     implementation(libs.androidx.annotation)
 }

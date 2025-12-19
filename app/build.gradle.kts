@@ -18,8 +18,8 @@ kotlin {
     jvmToolchain(21)
     compilerOptions {
         progressiveMode = true
-        languageVersion = KotlinVersion.KOTLIN_2_2
-        apiVersion = KotlinVersion.KOTLIN_2_2
+        languageVersion = KotlinVersion.KOTLIN_2_3
+        apiVersion = KotlinVersion.KOTLIN_2_3
     }
 }
 
@@ -124,6 +124,7 @@ dependencies {
     implementation(libs.lifecycle.viewmodel.navigation3)
 
     // Privileged
+    compileOnly(libs.stub)
     compileOnly(projects.hiddenApi)
     implementation(libs.hiddenapibypass)
     implementation(libs.refine.runtime)

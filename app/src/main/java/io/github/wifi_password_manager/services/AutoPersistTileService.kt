@@ -32,6 +32,7 @@ class AutoPersistTileService : TileService() {
 
     override fun onStartListening() {
         super.onStartListening()
+        listeningJob?.cancel()
         listeningJob =
             coroutineScope?.launch {
                 settingRepository.settings
