@@ -37,7 +37,7 @@ import androidx.compose.ui.unit.dp
 import io.github.wifi_password_manager.R
 import io.github.wifi_password_manager.domain.model.WifiNetwork
 import io.github.wifi_password_manager.navigation.LocalNavBackStack
-import io.github.wifi_password_manager.navigation.SettingScreen
+import io.github.wifi_password_manager.navigation.Route
 import io.github.wifi_password_manager.ui.screen.network.list.components.NetworkList
 import io.github.wifi_password_manager.ui.screen.network.list.components.SearchBar
 import io.github.wifi_password_manager.ui.shared.TooltipIconButton
@@ -76,7 +76,7 @@ fun NetworkListView(
                             )
 
                             TooltipIconButton(
-                                onClick = { navBackStack.add(SettingScreen) },
+                                onClick = { navBackStack.add(Route.SettingScreen) },
                                 imageVector = Icons.Outlined.Settings,
                                 tooltip = stringResource(R.string.settings_tooltip),
                                 positioning = TooltipAnchorPosition.Below,

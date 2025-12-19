@@ -25,8 +25,8 @@ import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
 import io.github.wifi_password_manager.BuildConfig
 import io.github.wifi_password_manager.R
-import io.github.wifi_password_manager.navigation.LicenseScreen
 import io.github.wifi_password_manager.navigation.LocalNavBackStack
+import io.github.wifi_password_manager.navigation.Route
 import io.github.wifi_password_manager.ui.screen.setting.components.ForgetAllConfirmDialog
 import io.github.wifi_password_manager.ui.screen.setting.components.SettingSection
 import io.github.wifi_password_manager.ui.screen.setting.components.ThemeModeItem
@@ -181,7 +181,7 @@ fun SettingView(state: SettingViewModel.State, onAction: (SettingViewModel.Actio
             item {
                 SettingSection(title = stringResource(R.string.about_section)) {
                     ListItem(
-                        modifier = Modifier.clickable { navBackStack.add(LicenseScreen) },
+                        modifier = Modifier.clickable { navBackStack.add(Route.LicenseScreen) },
                         headlineContent = { Text(text = stringResource(R.string.license_title)) },
                         supportingContent = {
                             Text(text = stringResource(R.string.license_description))

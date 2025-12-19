@@ -15,6 +15,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import androidx.savedstate.serialization.SavedStateConfiguration
 import io.github.wifi_password_manager.ui.screen.license.LicenseView
 import io.github.wifi_password_manager.ui.screen.network.list.NetworkListView
 import io.github.wifi_password_manager.ui.screen.network.list.NetworkListViewModel
@@ -22,22 +23,32 @@ import io.github.wifi_password_manager.ui.screen.setting.SettingView
 import io.github.wifi_password_manager.ui.screen.setting.SettingViewModel
 import io.github.wifi_password_manager.utils.toast
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.serialization.Serializable
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.polymorphic
 import org.koin.compose.viewmodel.koinViewModel
-
-@Serializable data object NetworkListScreen : NavKey
-
-@Serializable data object SettingScreen : NavKey
-
-@Serializable data object LicenseScreen : NavKey
 
 @Composable
 fun NavigationRoot(modifier: Modifier = Modifier) {
     val context = LocalContext.current
+    val backStack =
+        rememberNavBackStack(
+            configuration =
+                SavedStateConfiguration {
+                    serializersModule = SerializersModule {
+                        polymorphic(NavKey::class) {
+                            subclass(
+                                Route.NetworkListScreen::class,
+                                Route.NetworkListScreen.serializer(),
+                            )
+                            subclass(Route.SettingScreen::class, Route.SettingScreen.serializer())
+                            subclass(Route.LicenseScreen::class, Route.LicenseScreen.serializer())
+                        }
+                    }
+                },
+            Route.NetworkListScreen,
+        )
 
-    CompositionLocalProvider(LocalNavBackStack provides rememberNavBackStack(NetworkListScreen)) {
-        val backStack = LocalNavBackStack.current
-
+    CompositionLocalProvider(LocalNavBackStack provides backStack) {
         NavDisplay(
             modifier = modifier,
             backStack = backStack,
@@ -49,7 +60,7 @@ fun NavigationRoot(modifier: Modifier = Modifier) {
                 ),
             entryProvider =
                 entryProvider {
-                    entry<NetworkListScreen> {
+                    entry<Route.NetworkListScreen> {
                         val viewModel = koinViewModel<NetworkListViewModel>()
                         val state by viewModel.state.collectAsStateWithLifecycle()
 
@@ -66,7 +77,7 @@ fun NavigationRoot(modifier: Modifier = Modifier) {
                         NetworkListView(state = state, onAction = viewModel::onAction)
                     }
 
-                    entry<SettingScreen> {
+                    entry<Route.SettingScreen> {
                         val viewModel = koinViewModel<SettingViewModel>()
                         val state by viewModel.state.collectAsStateWithLifecycle()
 
@@ -83,7 +94,7 @@ fun NavigationRoot(modifier: Modifier = Modifier) {
                         SettingView(state = state, onAction = viewModel::onAction)
                     }
 
-                    entry<LicenseScreen> { LicenseView() }
+                    entry<Route.LicenseScreen> { LicenseView() }
                 },
         )
     }

@@ -7,6 +7,11 @@
     <string name="clear">Clear</string>
     <string name="back">Back</string>
 
+    <!-- Theme Mode -->
+    <string name="theme_mode_light">Light</string>
+    <string name="theme_mode_dark">Dark</string>
+    <string name="theme_mode_system">System</string>
+
     <!-- Network List Screen -->
     <string name="network_list_title">Saved WiFi Networks</string>
     <string name="search_hint">Find by SSID</string>
