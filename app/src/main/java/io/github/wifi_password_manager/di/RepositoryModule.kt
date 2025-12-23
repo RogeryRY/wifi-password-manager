@@ -1,6 +1,7 @@
 package io.github.wifi_password_manager.di
 
 import android.content.Context
+import io.github.wifi_password_manager.data.local.dao.WifiNetworkDao
 import io.github.wifi_password_manager.data.repository.FileRepositoryImpl
 import io.github.wifi_password_manager.data.repository.SettingRepositoryImpl
 import io.github.wifi_password_manager.data.repository.WifiRepositoryImpl
@@ -17,7 +18,8 @@ import org.koin.core.annotation.Single
 @Configuration
 class RepositoryModule {
     @Single(binds = [WifiRepository::class])
-    fun wifiRepository(context: Context) = WifiRepositoryImpl(context)
+    fun wifiRepository(context: Context, wifiNetworkDao: WifiNetworkDao) =
+        WifiRepositoryImpl(context, wifiNetworkDao, Dispatchers.IO)
 
     @Single(binds = [SettingRepository::class])
     fun settingRepository(context: Context, json: Json) =

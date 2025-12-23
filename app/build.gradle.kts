@@ -11,6 +11,7 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.ktfmt.gradle)
     alias(libs.plugins.refine)
+    alias(libs.plugins.room)
     alias(libs.plugins.stability.analyzer)
 }
 
@@ -105,7 +106,10 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.room.ktx)
+    implementation(libs.room.runtime)
     implementation(platform(libs.androidx.compose.bom))
+    ksp(libs.room.compiler)
 
     // Material Components
     implementation(libs.material.components)
@@ -158,4 +162,9 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.leakcanary.android)
+}
+
+room {
+    generateKotlin = true
+    schemaDirectory("$projectDir/schemas")
 }

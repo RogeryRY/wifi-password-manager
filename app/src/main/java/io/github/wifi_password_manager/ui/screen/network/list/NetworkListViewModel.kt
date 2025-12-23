@@ -7,21 +7,20 @@ import io.github.wifi_password_manager.R
 import io.github.wifi_password_manager.domain.model.WifiNetwork
 import io.github.wifi_password_manager.domain.repository.WifiRepository
 import io.github.wifi_password_manager.utils.UiText
-import io.github.wifi_password_manager.utils.fromWifiConfiguration
-import io.github.wifi_password_manager.utils.groupAndSortedBySsid
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.WhileSubscribed
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -29,9 +28,8 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 
-@OptIn(FlowPreview::class)
+@OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 class NetworkListViewModel(private val wifiRepository: WifiRepository) : ViewModel() {
     companion object {
         private const val TAG = "NetworkListViewModel"
@@ -69,22 +67,20 @@ class NetworkListViewModel(private val wifiRepository: WifiRepository) : ViewMod
     val event = _event.receiveAsFlow()
 
     init {
-        combine(
-                wifiRepository.configuredNetworks.map {
-                    it.map(WifiNetwork::fromWifiConfiguration)
-                },
-                state.map { it.searchText }.debounce(200.milliseconds),
-            ) { networks, searchText ->
-                val filteredNetwork =
-                    if (searchText.isBlank()) networks
-                    else networks.filter { it.ssid.contains(searchText.trim(), ignoreCase = true) }
-
-                filteredNetwork.groupAndSortedBySsid()
-            }
+        state
+            .map { it.searchText }
+            .debounce(200.milliseconds)
             .distinctUntilChanged()
-            .onEach { networks ->
-                _state.update { it.copy(savedNetworks = networks.toImmutableList()) }
+            .flatMapLatest { searchText ->
+                val query = searchText.trim()
+                if (query.isBlank()) {
+                    wifiRepository.getAllNetworks()
+                } else {
+                    wifiRepository.getAllNetworks("*$query*")
+                }
             }
+            .map { it.toImmutableList() }
+            .onEach { networks -> _state.update { it.copy(savedNetworks = networks) } }
             .launchIn(viewModelScope)
     }
 
@@ -98,10 +94,8 @@ class NetworkListViewModel(private val wifiRepository: WifiRepository) : ViewMod
     }
 
     private fun onRefresh() {
-        viewModelScope.launch {
-            wifiRepository.refresh()
-            _event.trySend(Event.ShowMessage(UiText.StringResource(R.string.refresh_success)))
-        }
+        wifiRepository.refresh()
+        _event.trySend(Event.ShowMessage(UiText.StringResource(R.string.refresh_success)))
     }
 
     private fun onToggleSearch() {

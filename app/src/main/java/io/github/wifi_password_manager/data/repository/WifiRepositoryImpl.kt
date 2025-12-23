@@ -12,23 +12,37 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import dev.rikka.tools.refine.Refine
+import io.github.wifi_password_manager.data.local.dao.WifiNetworkDao
+import io.github.wifi_password_manager.data.local.entity.toDomain
+import io.github.wifi_password_manager.data.local.entity.toEntity
+import io.github.wifi_password_manager.domain.model.WifiNetwork
 import io.github.wifi_password_manager.domain.repository.WifiRepository
+import io.github.wifi_password_manager.utils.fromWifiConfiguration
+import io.github.wifi_password_manager.utils.groupAndSortedBySsid
 import io.github.wifi_password_manager.utils.hasShizukuPermission
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import rikka.shizuku.Shizuku
 import rikka.shizuku.ShizukuBinderWrapper
 import rikka.shizuku.SystemServiceHelper
 
-class WifiRepositoryImpl(private val context: Context) : WifiRepository {
+class WifiRepositoryImpl(
+    private val context: Context,
+    private val wifiNetworkDao: WifiNetworkDao,
+    dispatcher: CoroutineDispatcher,
+) : WifiRepository {
     companion object {
         private const val TAG = "WifiService"
-
         private const val SHELL_PACKAGE = "com.android.shell"
     }
 
-    private val _configuredNetworks = MutableSharedFlow<List<WifiConfiguration>>()
-    override val configuredNetworks = _configuredNetworks.asSharedFlow()
+    private val _systemNetworks = MutableStateFlow<List<WifiNetwork>>(emptyList())
 
     private val wifiManager by lazy {
         SystemServiceHelper.getSystemService(Context.WIFI_SERVICE)
@@ -55,9 +69,38 @@ class WifiRepositoryImpl(private val context: Context) : WifiRepository {
         }
     }
 
-    override suspend fun refresh() {
-        val networks = getPrivilegedConfiguredNetworks()
-        _configuredNetworks.emit(value = networks)
+    init {
+        CoroutineScope(SupervisorJob() + dispatcher).launch {
+            _systemNetworks.collect { networks ->
+                if (networks.isNotEmpty()) {
+                    wifiNetworkDao.upsertNetworks(networks.map { it.toEntity() })
+
+                    val systemNetworkIds = networks.map { it.networkId }
+                    wifiNetworkDao.deleteNetworks(systemNetworkIds)
+                }
+            }
+        }
+    }
+
+    override fun getAllNetworks(): Flow<List<WifiNetwork>> =
+        wifiNetworkDao.getAllNetworks().map { entities -> entities.map { it.toDomain() } }
+
+    override fun getAllNetworks(query: String): Flow<List<WifiNetwork>> =
+        wifiNetworkDao.getAllNetworks(query).map { entities -> entities.map { it.toDomain() } }
+
+    override suspend fun getAllNetworksList(): List<WifiNetwork> {
+        return wifiNetworkDao.getAllNetworksList().map { it.toDomain() }
+    }
+
+    override suspend fun getNetworkCount(): Int {
+        return wifiNetworkDao.getNetworkCount()
+    }
+
+    override fun refresh() {
+        val configs = getPrivilegedConfiguredNetworks()
+        _systemNetworks.update {
+            configs.map(WifiNetwork::fromWifiConfiguration).groupAndSortedBySsid()
+        }
     }
 
     override fun getPrivilegedConfiguredNetworks(): List<WifiConfiguration> {

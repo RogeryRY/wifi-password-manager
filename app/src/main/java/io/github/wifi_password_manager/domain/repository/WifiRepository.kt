@@ -3,12 +3,19 @@
 package io.github.wifi_password_manager.domain.repository
 
 import android.net.wifi.WifiConfiguration
+import io.github.wifi_password_manager.domain.model.WifiNetwork
 import kotlinx.coroutines.flow.Flow
 
 interface WifiRepository {
-    val configuredNetworks: Flow<List<WifiConfiguration>>
+    fun getAllNetworks(): Flow<List<WifiNetwork>>
 
-    suspend fun refresh()
+    fun getAllNetworks(query: String): Flow<List<WifiNetwork>>
+
+    suspend fun getAllNetworksList(): List<WifiNetwork>
+
+    suspend fun getNetworkCount(): Int
+
+    fun refresh()
 
     fun getPrivilegedConfiguredNetworks(): List<WifiConfiguration>
 

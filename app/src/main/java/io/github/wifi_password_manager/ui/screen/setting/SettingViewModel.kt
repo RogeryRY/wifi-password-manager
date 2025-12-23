@@ -16,12 +16,10 @@ import io.github.vinceglb.filekit.readString
 import io.github.vinceglb.filekit.writeString
 import io.github.wifi_password_manager.R
 import io.github.wifi_password_manager.domain.model.Settings
-import io.github.wifi_password_manager.domain.model.WifiNetwork
 import io.github.wifi_password_manager.domain.repository.FileRepository
 import io.github.wifi_password_manager.domain.repository.SettingRepository
 import io.github.wifi_password_manager.domain.repository.WifiRepository
 import io.github.wifi_password_manager.utils.UiText
-import io.github.wifi_password_manager.utils.fromWifiConfiguration
 import io.github.wifi_password_manager.utils.toWifiConfigurations
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
@@ -104,6 +102,7 @@ class SettingViewModel(
             is Action.ToggleMaterialYou -> onToggleMaterialYou(action.value)
             is Action.ToggleAutoPersistEphemeralNetworks ->
                 onToggleAutoPersistEphemeralNetworks(action.value)
+
             is Action.ImportNetworks -> onImportNetworks()
             is Action.ExportNetworks -> onExportNetworks()
             is Action.ShowForgetAllDialog -> onShowForgetAllDialog()
@@ -130,39 +129,45 @@ class SettingViewModel(
 
     @OptIn(ExperimentalTime::class, FormatStringsInDatetimeFormats::class)
     private fun onExportNetworks() {
-        val configs = wifiRepository.getPrivilegedConfiguredNetworks()
-        if (configs.isEmpty()) {
-            _event.trySend(Event.ShowMessage(UiText.StringResource(R.string.no_network_to_export)))
-            return
-        }
+        viewModelScope.launch {
+            runCatching {
+                    val count = wifiRepository.getNetworkCount()
+                    if (count == 0) {
+                        _event.trySend(
+                            Event.ShowMessage(UiText.StringResource(R.string.no_network_to_export))
+                        )
+                        return@launch
+                    }
 
-        val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
-        val formatter = LocalDateTime.Format { byUnicodePattern(pattern = "yyyy-MM-dd_HH:mm:ss") }
-
-        runCatching {
-                viewModelScope.launch {
+                    val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+                    val formatter =
+                        LocalDateTime.Format { byUnicodePattern(pattern = "yyyy-MM-dd_HH:mm:ss") }
                     val file =
                         FileKit.openFileSaver(
                             suggestedName = "WiFi_${formatter.format(now)}",
                             extension = "json",
                         ) ?: return@launch
-                    val networks = configs.map(WifiNetwork::fromWifiConfiguration)
+                    val networks = wifiRepository.getAllNetworksList()
                     Dispatchers.IO { file.writeString(fileRepository.networksToJson(networks)) }
                 }
-            }
-            .fold(
-                onSuccess = {
-                    _event.trySend(
-                        Event.ShowMessage(UiText.StringResource(R.string.export_networks_success))
-                    )
-                },
-                onFailure = {
-                    Log.e(TAG, "Error exporting networks", it)
-                    _event.trySend(
-                        Event.ShowMessage(UiText.StringResource(R.string.export_networks_failed))
-                    )
-                },
-            )
+                .fold(
+                    onSuccess = {
+                        _event.trySend(
+                            Event.ShowMessage(
+                                UiText.StringResource(R.string.export_networks_success)
+                            )
+                        )
+                    },
+                    onFailure = {
+                        Log.e(TAG, "Error exporting networks", it)
+                        _event.trySend(
+                            Event.ShowMessage(
+                                UiText.StringResource(R.string.export_networks_failed)
+                            )
+                        )
+                    },
+                )
+        }
     }
 
     private fun onImportNetworks() {
@@ -194,6 +199,7 @@ class SettingViewModel(
                     Event.ShowMessage(UiText.StringResource(R.string.import_networks_failed))
                 )
             } finally {
+                wifiRepository.refresh()
                 _state.update { it.copy(isLoading = false) }
             }
         }
@@ -246,37 +252,41 @@ class SettingViewModel(
     }
 
     private fun onShowForgetAllDialog() {
-        val configs = wifiRepository.getPrivilegedConfiguredNetworks()
-        if (configs.isEmpty()) {
-            _event.trySend(Event.ShowMessage(UiText.StringResource(R.string.no_network_to_forget)))
-            return
-        }
+        viewModelScope.launch {
+            val count = wifiRepository.getNetworkCount()
+            if (count == 0) {
+                _event.trySend(
+                    Event.ShowMessage(UiText.StringResource(R.string.no_network_to_forget))
+                )
+                return@launch
+            }
 
-        _state.update { it.copy(showForgetAllDialog = true) }
+            _state.update { it.copy(showForgetAllDialog = true) }
+        }
     }
 
     private fun onForgetAllNetworks() {
-        val configs = wifiRepository.getPrivilegedConfiguredNetworks()
-        val validConfigs = configs.filter { it.networkId != -1 }
-
-        if (validConfigs.isEmpty()) {
-            Log.d(TAG, "No valid networks to remove")
-            return
-        }
-
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, showForgetAllDialog = false) }
 
             runCatching {
+                    val networks = wifiRepository.getAllNetworksList()
+                    val validNetworks = networks.filter { it.networkId != -1 }
+
+                    if (validNetworks.isEmpty()) {
+                        Log.d(TAG, "No valid networks to remove")
+                        return@launch
+                    }
+
                     Dispatchers.IO {
-                        validConfigs
+                        validNetworks
                             .map { async { wifiRepository.removeNetwork(it.networkId) } }
                             .awaitAll()
                     }
-                    _state.update { it.copy(isLoading = false) }
                 }
                 .fold(
                     onSuccess = {
+                        wifiRepository.refresh()
                         _event.trySend(
                             Event.ShowMessage(UiText.StringResource(R.string.forget_success))
                         )
@@ -288,6 +298,8 @@ class SettingViewModel(
                         )
                     },
                 )
+
+            _state.update { it.copy(isLoading = false) }
         }
     }
 }
