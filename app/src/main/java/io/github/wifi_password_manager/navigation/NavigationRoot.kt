@@ -19,13 +19,17 @@ import androidx.savedstate.serialization.SavedStateConfiguration
 import io.github.wifi_password_manager.ui.screen.license.LicenseView
 import io.github.wifi_password_manager.ui.screen.network.list.NetworkListView
 import io.github.wifi_password_manager.ui.screen.network.list.NetworkListViewModel
+import io.github.wifi_password_manager.ui.screen.note.NoteView
+import io.github.wifi_password_manager.ui.screen.note.NoteViewModel
 import io.github.wifi_password_manager.ui.screen.setting.SettingView
 import io.github.wifi_password_manager.ui.screen.setting.SettingViewModel
 import io.github.wifi_password_manager.utils.toast
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
+import kotlinx.serialization.modules.subclass
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 @Composable
 fun NavigationRoot(modifier: Modifier = Modifier) {
@@ -36,12 +40,10 @@ fun NavigationRoot(modifier: Modifier = Modifier) {
                 SavedStateConfiguration {
                     serializersModule = SerializersModule {
                         polymorphic(NavKey::class) {
-                            subclass(
-                                Route.NetworkListScreen::class,
-                                Route.NetworkListScreen.serializer(),
-                            )
-                            subclass(Route.SettingScreen::class, Route.SettingScreen.serializer())
-                            subclass(Route.LicenseScreen::class, Route.LicenseScreen.serializer())
+                            subclass(Route.NetworkListScreen::class)
+                            subclass(Route.SettingScreen::class)
+                            subclass(Route.LicenseScreen::class)
+                            subclass(Route.NoteScreen::class)
                         }
                     }
                 },
@@ -95,6 +97,30 @@ fun NavigationRoot(modifier: Modifier = Modifier) {
                     }
 
                     entry<Route.LicenseScreen> { LicenseView() }
+
+                    entry<Route.NoteScreen> {
+                        val viewModel = koinViewModel<NoteViewModel> { parametersOf(it.network) }
+                        val state by viewModel.state.collectAsStateWithLifecycle()
+
+                        LaunchedEffect(Unit) {
+                            viewModel.event.collectLatest { event ->
+                                when (event) {
+                                    is NoteViewModel.Event.ShowMessage -> {
+                                        context.toast(event.message.asString(context))
+                                    }
+                                    is NoteViewModel.Event.NavigateBack -> {
+                                        backStack.removeLastOrNull()
+                                    }
+                                }
+                            }
+                        }
+
+                        NoteView(
+                            network = it.network,
+                            state = state,
+                            onAction = viewModel::onAction,
+                        )
+                    }
                 },
         )
     }

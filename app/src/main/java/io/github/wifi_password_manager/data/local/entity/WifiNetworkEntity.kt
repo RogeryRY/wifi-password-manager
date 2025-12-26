@@ -7,13 +7,15 @@ import kotlinx.collections.immutable.toImmutableSet
 
 @Entity(tableName = "wifi_networks")
 data class WifiNetworkEntity(
-    @PrimaryKey val networkId: Int,
+    @PrimaryKey(autoGenerate = true) val rowid: Int = 0,
     val ssid: String,
+    val networkId: Int,
     val securityTypes: String,
     val password: String,
     val hidden: Boolean,
     val autojoin: Boolean,
     val private: Boolean,
+    val note: String?,
 )
 
 fun WifiNetwork.toEntity(): WifiNetworkEntity {
@@ -25,6 +27,7 @@ fun WifiNetwork.toEntity(): WifiNetworkEntity {
         hidden = hidden,
         autojoin = autojoin,
         private = private,
+        note = note,
     )
 }
 
@@ -38,5 +41,6 @@ fun WifiNetworkEntity.toDomain(): WifiNetwork {
         hidden = hidden,
         autojoin = autojoin,
         private = private,
+        note = note,
     )
 }

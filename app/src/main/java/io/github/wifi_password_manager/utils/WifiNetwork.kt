@@ -50,6 +50,7 @@ val WifiNetwork.Companion.MOCK
                     hidden = Random.nextBoolean(),
                     autojoin = Random.nextBoolean(),
                     private = Random.nextBoolean(),
+                    note = if (Random.nextBoolean()) "Note $it" else null,
                 )
             }
             .toImmutableList()
@@ -68,6 +69,7 @@ fun WifiNetwork.toWifiConfigurations(): List<WifiConfiguration> {
     return securityType.map { type ->
         val config =
             WifiConfigurationHidden().apply {
+                networkId = this@toWifiConfigurations.networkId
                 SSID = "\"$ssid\""
                 when (type) {
                     SecurityType.OPEN -> {
@@ -112,17 +114,19 @@ fun WifiNetwork.toWifiConfigurations(): List<WifiConfiguration> {
 }
 
 fun WifiNetwork.getSecurity(context: Context): String =
-    securityType.joinToString("/") {
-        context.getString(
-            when (it) {
-                SecurityType.OPEN -> R.string.security_open
-                SecurityType.OWE -> R.string.security_owe
-                SecurityType.WPA2 -> R.string.security_wpa2
-                SecurityType.WPA3 -> R.string.security_wpa3
-                SecurityType.WEP -> R.string.security_wep
-            }
-        )
-    }
+    securityType
+        .sortedBy { it.ordinal }
+        .joinToString("/") {
+            context.getString(
+                when (it) {
+                    SecurityType.OPEN -> R.string.security_open
+                    SecurityType.OWE -> R.string.security_owe
+                    SecurityType.WPA2 -> R.string.security_wpa2
+                    SecurityType.WPA3 -> R.string.security_wpa3
+                    SecurityType.WEP -> R.string.security_wep
+                }
+            )
+        }
 
 fun WifiNetwork.passwordClipEntry(isSensitive: Boolean = true): ClipEntry {
     val clipData = ClipData.newPlainText(ssid, password)

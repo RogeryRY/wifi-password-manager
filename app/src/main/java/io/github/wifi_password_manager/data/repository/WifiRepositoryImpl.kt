@@ -18,16 +18,11 @@ import io.github.wifi_password_manager.data.local.entity.toEntity
 import io.github.wifi_password_manager.domain.model.WifiNetwork
 import io.github.wifi_password_manager.domain.repository.WifiRepository
 import io.github.wifi_password_manager.utils.fromWifiConfiguration
-import io.github.wifi_password_manager.utils.groupAndSortedBySsid
 import io.github.wifi_password_manager.utils.hasShizukuPermission
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.invoke
 import rikka.shizuku.Shizuku
 import rikka.shizuku.ShizukuBinderWrapper
 import rikka.shizuku.SystemServiceHelper
@@ -35,14 +30,12 @@ import rikka.shizuku.SystemServiceHelper
 class WifiRepositoryImpl(
     private val context: Context,
     private val wifiNetworkDao: WifiNetworkDao,
-    dispatcher: CoroutineDispatcher,
+    private val dispatcher: CoroutineDispatcher,
 ) : WifiRepository {
     companion object {
         private const val TAG = "WifiService"
         private const val SHELL_PACKAGE = "com.android.shell"
     }
-
-    private val _systemNetworks = MutableStateFlow<List<WifiNetwork>>(emptyList())
 
     private val wifiManager by lazy {
         SystemServiceHelper.getSystemService(Context.WIFI_SERVICE)
@@ -69,17 +62,22 @@ class WifiRepositoryImpl(
         }
     }
 
-    init {
-        CoroutineScope(SupervisorJob() + dispatcher).launch {
-            _systemNetworks.collect { networks ->
-                if (networks.isNotEmpty()) {
-                    wifiNetworkDao.upsertNetworks(networks.map { it.toEntity() })
-
-                    val systemNetworkIds = networks.map { it.networkId }
-                    wifiNetworkDao.deleteNetworks(systemNetworkIds)
-                }
-            }
+    private suspend fun syncNetworksToDatabase(networks: List<WifiNetwork>) = dispatcher {
+        if (networks.isEmpty()) {
+            wifiNetworkDao.deleteNetworks()
+            return@dispatcher
         }
+
+        val existingNetworks = wifiNetworkDao.getAllNetworksList()
+        val networksWithNotes =
+            networks.map { network ->
+                val existingNote = existingNetworks.firstOrNull { it.ssid == network.ssid }?.note
+                network.copy(note = existingNote ?: network.note).toEntity()
+            }
+        wifiNetworkDao.upsertNetworks(networksWithNotes)
+
+        val systemSsids = networks.map { it.ssid }
+        wifiNetworkDao.deleteNetworks(systemSsids)
     }
 
     override fun getAllNetworks(): Flow<List<WifiNetwork>> =
@@ -96,11 +94,10 @@ class WifiRepositoryImpl(
         return wifiNetworkDao.getNetworkCount()
     }
 
-    override fun refresh() {
+    override suspend fun refresh() {
         val configs = getPrivilegedConfiguredNetworks()
-        _systemNetworks.update {
-            configs.map(WifiNetwork::fromWifiConfiguration).groupAndSortedBySsid()
-        }
+        val networks = configs.map(WifiNetwork::fromWifiConfiguration)
+        syncNetworksToDatabase(networks)
     }
 
     override fun getPrivilegedConfiguredNetworks(): List<WifiConfiguration> {
@@ -141,5 +138,9 @@ class WifiRepositoryImpl(
             return false
         }
         return wifiManager.removeNetwork(netId, user)
+    }
+
+    override suspend fun updateNote(ssid: String, note: String?) {
+        wifiNetworkDao.updateNote(ssid, note)
     }
 }

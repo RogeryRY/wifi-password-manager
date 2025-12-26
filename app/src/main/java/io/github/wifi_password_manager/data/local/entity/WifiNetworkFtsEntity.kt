@@ -5,4 +5,4 @@ import androidx.room.Fts4
 
 @Fts4(contentEntity = WifiNetworkEntity::class)
 @Entity(tableName = "wifi_networks_fts")
-data class WifiNetworkFtsEntity(val ssid: String)
+data class WifiNetworkFtsEntity(val ssid: String, val note: String)

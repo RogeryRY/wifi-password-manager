@@ -15,11 +15,13 @@ interface WifiRepository {
 
     suspend fun getNetworkCount(): Int
 
-    fun refresh()
+    suspend fun refresh()
 
     fun getPrivilegedConfiguredNetworks(): List<WifiConfiguration>
 
     fun addOrUpdateNetworkPrivileged(config: WifiConfiguration): Boolean
 
     fun removeNetwork(netId: Int): Boolean
+
+    suspend fun updateNote(ssid: String, note: String?)
 }

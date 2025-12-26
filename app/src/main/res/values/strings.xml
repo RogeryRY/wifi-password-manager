@@ -6,6 +6,11 @@
     <string name="ok">OK</string>
     <string name="clear">Clear</string>
     <string name="back">Back</string>
+    <string name="save">Save</string>
+    <string name="on">On</string>
+    <string name="off">Off</string>
+    <string name="delete">Delete</string>
+    <string name="warning">Warning</string>
 
     <!-- Theme Mode -->
     <string name="theme_mode_light">Light</string>
@@ -14,7 +19,7 @@
 
     <!-- Network List Screen -->
     <string name="network_list_title">Saved WiFi Networks</string>
-    <string name="search_hint">Find by SSID</string>
+    <string name="search_hint">Search by SSID or Note</string>
     <string name="search_tooltip">Search</string>
     <string name="refresh_description">Refresh</string>
     <string name="no_networks_found">No WiFi Networks Found</string>
@@ -42,7 +47,7 @@
     <string name="forget_all_action">Forget all networks</string>
     <string name="forget_all_description">Remove all saved WiFi networks from this device</string>
     <string name="auto_persist_ephemeral_networks_action">Auto persist ephemeral networks</string>
-    <string name="auto_persist_ephemeral_networks_description">Automatically save temporary networks that would otherwise be forgotten after disconnecting</string>
+    <string name="auto_persist_ephemeral_networks_description">Automatically save temporary networks that would otherwise be forgotten after disconnecting (may cause disconnects)</string>
 
     <!-- About Section -->
     <string name="about_section">About</string>
@@ -54,8 +59,6 @@
 
     <!-- Quick Settings Tiles -->
     <string name="auto_persist">Auto-persist</string>
-    <string name="on">On</string>
-    <string name="off">Off</string>
 
     <!-- WiFi Card -->
     <string name="copy_action">Copy</string>
@@ -65,6 +68,19 @@
     <string name="no_password">No password</string>
     <string name="show_wifi_qr_code">Show WiFi QR Code</string>
     <string name="wifi_qr_code">WiFi QR Code</string>
+    <string name="more_options">More options</string>
+    <string name="note_label">Note</string>
+    <string name="add_note">Add note</string>
+    <string name="edit_note">Edit note</string>
+    <string name="delete_note">Delete note</string>
+    <string name="note_deleted">Note deleted</string>
+
+    <!-- Note Screen -->
+    <string name="note_hint">Enter your note here…</string>
+    <string name="note_title">Note for %1$s</string>
+    <string name="empty_note_discarded">Empty note discarded</string>
+    <string name="note_saved">Note saved</string>
+    <string name="note_save_failed">Failed to save note</string>
 
     <!-- Security Types -->
     <string name="security_open">None</string>
@@ -80,7 +96,6 @@
     <string name="install_shizuku">Install Shizuku</string>
 
     <!-- Forget All Networks Confirmation Dialog -->
-    <string name="warning">Warning</string>
     <string name="forget_all_confirmation_title">Forget all networks?</string>
     <string name="forget_all_confirmation_message">This will permanently remove all saved WiFi networks from this device. This action cannot be undone.</string>
 

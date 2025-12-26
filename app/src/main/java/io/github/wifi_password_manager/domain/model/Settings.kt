@@ -3,10 +3,12 @@ package io.github.wifi_password_manager.domain.model
 import androidx.annotation.StringRes
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.ReadOnlyComposable
 import io.github.wifi_password_manager.R
 import kotlinx.serialization.Serializable
 
+@Immutable
 @Serializable
 data class Settings(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,

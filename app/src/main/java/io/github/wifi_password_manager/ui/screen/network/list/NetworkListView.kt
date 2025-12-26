@@ -135,6 +135,7 @@ fun NetworkListView(
                 modifier = modifier,
                 contentPadding = innerPadding,
                 networks = state.savedNetworks,
+                onAction = onAction,
             )
         }
     }

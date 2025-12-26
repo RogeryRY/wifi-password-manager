@@ -15,5 +15,6 @@ class AppModule {
         isLenient = true
         prettyPrint = true
         coerceInputValues = true
+        explicitNulls = false
     }
 }

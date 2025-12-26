@@ -11,9 +11,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.QrCode2
+import androidx.compose.material.icons.outlined.EditNote
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -22,11 +27,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TooltipAnchorPosition
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -41,6 +48,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.wifi_password_manager.R
 import io.github.wifi_password_manager.domain.model.WifiNetwork
+import io.github.wifi_password_manager.navigation.LocalNavBackStack
+import io.github.wifi_password_manager.navigation.Route
+import io.github.wifi_password_manager.ui.screen.network.list.NetworkListViewModel
 import io.github.wifi_password_manager.ui.shared.TooltipIconButton
 import io.github.wifi_password_manager.ui.theme.WiFiPasswordManagerTheme
 import io.github.wifi_password_manager.utils.MOCK
@@ -48,10 +58,22 @@ import io.github.wifi_password_manager.utils.getSecurity
 import io.github.wifi_password_manager.utils.passwordClipEntry
 import kotlinx.coroutines.launch
 
+private sealed interface OptionState {
+    data object WifiQR : OptionState
+}
+
 @Composable
-fun WifiCard(modifier: Modifier = Modifier, network: WifiNetwork, expanded: Boolean = false) {
+fun WifiCard(
+    modifier: Modifier = Modifier,
+    network: WifiNetwork,
+    expanded: Boolean = false,
+    onAction: (NetworkListViewModel.Action) -> Unit,
+) {
+    val navBackStack = LocalNavBackStack.current
+    var optionState by remember { mutableStateOf<OptionState?>(null) }
+
     ElevatedCard(modifier = modifier) {
-        SSIDItem(network = network)
+        SSIDItem(network = network, onOptionStateChange = { optionState = it }, onAction = onAction)
 
         if (network.password.isNotEmpty() || expanded) {
             HorizontalDivider(
@@ -62,14 +84,40 @@ fun WifiCard(modifier: Modifier = Modifier, network: WifiNetwork, expanded: Bool
 
             PasswordItem(network = network)
         }
+
+        if (network.note != null) {
+            HorizontalDivider(
+                modifier =
+                    Modifier.background(color = ListItemDefaults.containerColor)
+                        .padding(horizontal = 16.dp)
+            )
+
+            NoteItem(
+                modifier =
+                    Modifier.clickable { navBackStack.add(Route.NoteScreen(network = network)) },
+                network = network,
+            )
+        }
+    }
+
+    when (optionState) {
+        OptionState.WifiQR -> WifiQRDialog(network = network, onDismiss = { optionState = null })
+        null -> Unit
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
-private fun SSIDItem(modifier: Modifier = Modifier, network: WifiNetwork) {
+private fun SSIDItem(
+    modifier: Modifier = Modifier,
+    network: WifiNetwork,
+    onOptionStateChange: (OptionState?) -> Unit,
+    onAction: (NetworkListViewModel.Action) -> Unit,
+) {
+    val navBackStack = LocalNavBackStack.current
     val context = LocalContext.current
-    var showQRDialog by rememberSaveable { mutableStateOf(false) }
+
+    var expanded by rememberSaveable { mutableStateOf(false) }
 
     ListItem(
         modifier = modifier,
@@ -84,17 +132,100 @@ private fun SSIDItem(modifier: Modifier = Modifier, network: WifiNetwork) {
         supportingContent = { Text(text = network.getSecurity(context)) },
         trailingContent = {
             TooltipIconButton(
-                onClick = { showQRDialog = true },
-                imageVector = Icons.Filled.QrCode2,
-                tooltip = stringResource(R.string.show_wifi_qr_code),
-                positioning = TooltipAnchorPosition.Above,
+                onClick = { expanded = true },
+                imageVector = Icons.Filled.MoreVert,
+                tooltip = stringResource(R.string.more_options),
+                positioning = TooltipAnchorPosition.Below,
             )
+
+            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                DropdownMenuItem(
+                    onClick = {},
+                    text = {
+                        Text(text = network.ssid, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    },
+                    shape = MenuDefaults.standaloneItemShape,
+                    enabled = false,
+                    colors =
+                        MenuDefaults.itemColors(
+                            disabledTextColor = MaterialTheme.colorScheme.primary
+                        ),
+                )
+
+                HorizontalDivider(
+                    modifier = Modifier.padding(horizontal = MenuDefaults.HorizontalDividerPadding)
+                )
+
+                DropdownMenuItem(
+                    onClick = {
+                        expanded = false
+                        onOptionStateChange(OptionState.WifiQR)
+                    },
+                    text = { Text(text = stringResource(R.string.wifi_qr_code)) },
+                    shape = MenuDefaults.standaloneItemShape,
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Filled.QrCode2,
+                            contentDescription = stringResource(R.string.show_wifi_qr_code),
+                        )
+                    },
+                )
+
+                HorizontalDivider(
+                    modifier = Modifier.padding(horizontal = MenuDefaults.HorizontalDividerPadding)
+                )
+
+                DropdownMenuItem(
+                    onClick = {
+                        expanded = false
+                        navBackStack.add(Route.NoteScreen(network = network))
+                    },
+                    shape = MenuDefaults.standaloneItemShape,
+                    text = {
+                        Text(
+                            text =
+                                stringResource(
+                                    if (network.note != null) R.string.edit_note
+                                    else R.string.add_note
+                                )
+                        )
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Outlined.EditNote,
+                            contentDescription =
+                                stringResource(
+                                    if (network.note != null) R.string.edit_note
+                                    else R.string.add_note
+                                ),
+                        )
+                    },
+                )
+
+                if (network.note != null) {
+                    DropdownMenuItem(
+                        onClick = {
+                            expanded = false
+                            onAction(NetworkListViewModel.Action.DeleteNote(network.ssid))
+                        },
+                        text = { Text(text = stringResource(R.string.delete_note)) },
+                        shape = MenuDefaults.standaloneItemShape,
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Filled.DeleteOutline,
+                                contentDescription = stringResource(R.string.delete_note),
+                            )
+                        },
+                        colors =
+                            MenuDefaults.itemColors(
+                                textColor = MaterialTheme.colorScheme.error,
+                                leadingIconColor = MaterialTheme.colorScheme.error,
+                            ),
+                    )
+                }
+            }
         },
     )
-
-    if (showQRDialog) {
-        WifiQRDialog(network = network, onDismiss = { showQRDialog = false })
-    }
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -153,6 +284,22 @@ private fun PasswordItem(modifier: Modifier = Modifier, network: WifiNetwork) {
     )
 }
 
+@Composable
+private fun NoteItem(modifier: Modifier = Modifier, network: WifiNetwork) {
+    ListItem(
+        modifier = modifier,
+        headlineContent = {
+            Text(
+                text = stringResource(R.string.note_label),
+                style = MaterialTheme.typography.titleMedium,
+            )
+        },
+        supportingContent = {
+            Text(text = network.note.orEmpty(), maxLines = 3, overflow = TextOverflow.Ellipsis)
+        },
+    )
+}
+
 @PreviewLightDark
 @Composable
 private fun WifiCardPreview() {
@@ -161,7 +308,7 @@ private fun WifiCardPreview() {
             contentPadding = PaddingValues(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            items(WifiNetwork.MOCK) { WifiCard(network = it) }
+            items(WifiNetwork.MOCK) { WifiCard(network = it, onAction = {}) }
         }
     }
 }
@@ -174,7 +321,7 @@ private fun ExpandedWifiCardPreview() {
             contentPadding = PaddingValues(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            items(WifiNetwork.MOCK) { WifiCard(network = it, expanded = true) }
+            items(WifiNetwork.MOCK) { WifiCard(network = it, expanded = true, onAction = {}) }
         }
     }
 }

@@ -7,6 +7,7 @@ import io.github.wifi_password_manager.R
 import io.github.wifi_password_manager.domain.model.WifiNetwork
 import io.github.wifi_password_manager.domain.repository.WifiRepository
 import io.github.wifi_password_manager.utils.UiText
+import io.github.wifi_password_manager.utils.groupAndSortedBySsid
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.collections.immutable.ImmutableList
@@ -28,6 +29,7 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 class NetworkListViewModel(private val wifiRepository: WifiRepository) : ViewModel() {
@@ -47,6 +49,8 @@ class NetworkListViewModel(private val wifiRepository: WifiRepository) : ViewMod
         data object ToggleSearch : Action
 
         data class SearchTextChanged(val text: String) : Action
+
+        data class DeleteNote(val ssid: String) : Action
     }
 
     sealed interface Event {
@@ -72,14 +76,14 @@ class NetworkListViewModel(private val wifiRepository: WifiRepository) : ViewMod
             .debounce(200.milliseconds)
             .distinctUntilChanged()
             .flatMapLatest { searchText ->
-                val query = searchText.trim()
+                val query = searchText.replace("[^a-zA-Z0-9\\\\s]".toRegex(), "").trim()
                 if (query.isBlank()) {
                     wifiRepository.getAllNetworks()
                 } else {
                     wifiRepository.getAllNetworks("*$query*")
                 }
             }
-            .map { it.toImmutableList() }
+            .map { it.groupAndSortedBySsid().toImmutableList() }
             .onEach { networks -> _state.update { it.copy(savedNetworks = networks) } }
             .launchIn(viewModelScope)
     }
@@ -90,15 +94,25 @@ class NetworkListViewModel(private val wifiRepository: WifiRepository) : ViewMod
             is Action.Refresh -> onRefresh()
             is Action.ToggleSearch -> onToggleSearch()
             is Action.SearchTextChanged -> _state.update { it.copy(searchText = action.text) }
+            is Action.DeleteNote -> onDeleteNote(action.ssid)
         }
     }
 
     private fun onRefresh() {
-        wifiRepository.refresh()
-        _event.trySend(Event.ShowMessage(UiText.StringResource(R.string.refresh_success)))
+        viewModelScope.launch {
+            wifiRepository.refresh()
+            _event.send(Event.ShowMessage(UiText.StringResource(R.string.refresh_success)))
+        }
     }
 
     private fun onToggleSearch() {
         _state.update { it.copy(showingSearch = !it.showingSearch, searchText = "") }
+    }
+
+    private fun onDeleteNote(ssid: String) {
+        viewModelScope.launch {
+            wifiRepository.updateNote(ssid, null)
+            _event.send(Event.ShowMessage(UiText.StringResource(R.string.note_deleted)))
+        }
     }
 }

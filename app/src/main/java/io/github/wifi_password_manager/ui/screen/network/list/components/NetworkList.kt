@@ -16,6 +16,7 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
 import io.github.wifi_password_manager.domain.model.WifiNetwork
+import io.github.wifi_password_manager.ui.screen.network.list.NetworkListViewModel
 import io.github.wifi_password_manager.ui.theme.WiFiPasswordManagerTheme
 import io.github.wifi_password_manager.utils.DeviceConfiguration
 import io.github.wifi_password_manager.utils.MOCK
@@ -27,6 +28,7 @@ fun NetworkList(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
     networks: ImmutableList<WifiNetwork>,
+    onAction: (NetworkListViewModel.Action) -> Unit,
 ) {
     val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
     when (val deviceConfiguration = DeviceConfiguration.fromWindowSizeClass(windowSizeClass)) {
@@ -41,7 +43,7 @@ fun NetworkList(
                     key = { it.ssid },
                     contentType = { it.password.isEmpty() },
                 ) { network ->
-                    WifiCard(network = network)
+                    WifiCard(network = network, onAction = onAction)
                 }
             }
         }
@@ -61,7 +63,7 @@ fun NetworkList(
                     key = { it.ssid },
                     contentType = { it.password.isEmpty() },
                 ) { network ->
-                    WifiCard(network = network, expanded = true)
+                    WifiCard(network = network, expanded = true, onAction = onAction)
                 }
             }
         }
@@ -73,7 +75,7 @@ fun NetworkList(
 private fun NetworkListPreview() {
     WiFiPasswordManagerTheme {
         Surface(color = MaterialTheme.colorScheme.surfaceContainer) {
-            NetworkList(networks = WifiNetwork.MOCK)
+            NetworkList(networks = WifiNetwork.MOCK, onAction = {})
         }
     }
 }
@@ -83,7 +85,7 @@ private fun NetworkListPreview() {
 private fun AdaptiveNetworkListPreview() {
     WiFiPasswordManagerTheme {
         Surface(color = MaterialTheme.colorScheme.surfaceContainer) {
-            NetworkList(networks = WifiNetwork.MOCK)
+            NetworkList(networks = WifiNetwork.MOCK, onAction = {})
         }
     }
 }

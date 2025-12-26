@@ -133,7 +133,7 @@ class SettingViewModel(
             runCatching {
                     val count = wifiRepository.getNetworkCount()
                     if (count == 0) {
-                        _event.trySend(
+                        _event.send(
                             Event.ShowMessage(UiText.StringResource(R.string.no_network_to_export))
                         )
                         return@launch
@@ -152,7 +152,7 @@ class SettingViewModel(
                 }
                 .fold(
                     onSuccess = {
-                        _event.trySend(
+                        _event.send(
                             Event.ShowMessage(
                                 UiText.StringResource(R.string.export_networks_success)
                             )
@@ -160,7 +160,7 @@ class SettingViewModel(
                     },
                     onFailure = {
                         Log.e(TAG, "Error exporting networks", it)
-                        _event.trySend(
+                        _event.send(
                             Event.ShowMessage(
                                 UiText.StringResource(R.string.export_networks_failed)
                             )
@@ -187,15 +187,15 @@ class SettingViewModel(
                 } else {
                     importMultipleFiles(files)
                 }
-                _event.trySend(
+                _event.send(
                     Event.ShowMessage(UiText.StringResource(R.string.import_networks_success))
                 )
             } catch (e: SerializationException) {
                 Log.e(TAG, "Error parsing JSON", e)
-                _event.trySend(Event.ShowMessage(UiText.StringResource(R.string.invalid_json)))
+                _event.send(Event.ShowMessage(UiText.StringResource(R.string.invalid_json)))
             } catch (e: Throwable) {
                 Log.e(TAG, "Error importing networks", e)
-                _event.trySend(
+                _event.send(
                     Event.ShowMessage(UiText.StringResource(R.string.import_networks_failed))
                 )
             } finally {
@@ -209,9 +209,7 @@ class SettingViewModel(
         Dispatchers.IO {
             val networks = fileRepository.networksFromJson(file.readString())
             if (networks.isEmpty()) {
-                _event.trySend(
-                    Event.ShowMessage(UiText.StringResource(R.string.no_network_to_import))
-                )
+                _event.send(Event.ShowMessage(UiText.StringResource(R.string.no_network_to_import)))
                 return@IO
             }
 
@@ -221,32 +219,64 @@ class SettingViewModel(
                     configs.map { async { wifiRepository.addOrUpdateNetworkPrivileged(it) } }
                 }
                 .awaitAll()
+
+            wifiRepository.refresh()
+
+            networks
+                .filter { it.note != null }
+                .map { async { wifiRepository.updateNote(it.ssid, it.note) } }
+                .awaitAll()
         }
 
     private suspend fun importMultipleFiles(files: List<PlatformFile>) {
         Dispatchers.IO {
+            val allNetworks =
+                files.flatMap { file ->
+                    runCatching { fileRepository.networksFromJson(file.readString()) }
+                        .onFailure { Log.e(TAG, "Error parsing JSON from file: ${file.name}", it) }
+                        .getOrDefault(emptyList())
+                }
+
             val networks =
-                files
-                    .flatMap { file ->
-                        runCatching { fileRepository.networksFromJson(file.readString()) }
-                            .onFailure {
-                                Log.e(TAG, "Error parsing JSON from file: ${file.name}", it)
+                allNetworks
+                    .groupBy { it.ssid }
+                    .values
+                    .map { duplicateNetworks ->
+                        val network = duplicateNetworks.first()
+
+                        val notes =
+                            duplicateNetworks
+                                .mapNotNull { it.note?.trim() }
+                                .filter { it.isNotBlank() }
+                                .distinct()
+
+                        val mergedNote =
+                            when {
+                                notes.isEmpty() -> null
+                                notes.size == 1 -> notes.first()
+                                else -> notes.joinToString("\n")
                             }
-                            .getOrDefault(emptyList())
+
+                        network.copy(note = mergedNote)
                     }
-                    .toSet()
 
             if (networks.isEmpty()) {
-                _event.trySend(
-                    Event.ShowMessage(UiText.StringResource(R.string.no_network_to_import))
-                )
+                _event.send(Event.ShowMessage(UiText.StringResource(R.string.no_network_to_import)))
                 return@IO
             }
+
             networks
                 .flatMap { network ->
                     val configs = network.toWifiConfigurations()
                     configs.map { async { wifiRepository.addOrUpdateNetworkPrivileged(it) } }
                 }
+                .awaitAll()
+
+            wifiRepository.refresh()
+
+            networks
+                .filter { it.note != null }
+                .map { async { wifiRepository.updateNote(it.ssid, it.note) } }
                 .awaitAll()
         }
     }
@@ -255,9 +285,7 @@ class SettingViewModel(
         viewModelScope.launch {
             val count = wifiRepository.getNetworkCount()
             if (count == 0) {
-                _event.trySend(
-                    Event.ShowMessage(UiText.StringResource(R.string.no_network_to_forget))
-                )
+                _event.send(Event.ShowMessage(UiText.StringResource(R.string.no_network_to_forget)))
                 return@launch
             }
 
@@ -275,6 +303,7 @@ class SettingViewModel(
 
                     if (validNetworks.isEmpty()) {
                         Log.d(TAG, "No valid networks to remove")
+                        _state.update { it.copy(isLoading = false) }
                         return@launch
                     }
 
@@ -287,13 +316,13 @@ class SettingViewModel(
                 .fold(
                     onSuccess = {
                         wifiRepository.refresh()
-                        _event.trySend(
+                        _event.send(
                             Event.ShowMessage(UiText.StringResource(R.string.forget_success))
                         )
                     },
                     onFailure = {
                         Log.e(TAG, "Failed to remove networks", it)
-                        _event.trySend(
+                        _event.send(
                             Event.ShowMessage(UiText.StringResource(R.string.forget_failed))
                         )
                     },
