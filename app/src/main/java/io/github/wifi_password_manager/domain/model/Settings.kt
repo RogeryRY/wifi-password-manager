@@ -14,6 +14,8 @@ data class Settings(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val useMaterialYou: Boolean = true,
     val autoPersistEphemeralNetworks: Boolean = false,
+    val appLockEnabled: Boolean = false,
+    val secureScreenEnabled: Boolean = false,
 ) {
     @Serializable
     enum class ThemeMode {

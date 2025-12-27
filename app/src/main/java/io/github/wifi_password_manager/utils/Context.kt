@@ -4,6 +4,9 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.widget.Toast
+import androidx.annotation.StringRes
+import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricManager.Authenticators
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import rikka.shizuku.Shizuku
@@ -28,3 +31,12 @@ fun Context.launchUrl(url: String) {
 
 fun Context.toast(text: CharSequence, duration: Int = Toast.LENGTH_SHORT) =
     Toast.makeText(this, text, duration).show()
+
+fun Context.toast(@StringRes resId: Int, duration: Int = Toast.LENGTH_SHORT) =
+    Toast.makeText(this, resId, duration).show()
+
+fun Context.isBiometricAuthenticationSupported(): Boolean {
+    val authenticators = Authenticators.BIOMETRIC_WEAK or Authenticators.DEVICE_CREDENTIAL
+    return BiometricManager.from(this).canAuthenticate(authenticators) ==
+        BiometricManager.BIOMETRIC_SUCCESS
+}

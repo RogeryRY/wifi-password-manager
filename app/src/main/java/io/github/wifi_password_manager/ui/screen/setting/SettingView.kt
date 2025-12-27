@@ -1,6 +1,10 @@
 package io.github.wifi_password_manager.ui.screen.setting
 
 import android.os.Build
+import androidx.biometric.AuthenticationRequest
+import androidx.biometric.AuthenticationResult
+import androidx.biometric.BiometricPrompt
+import androidx.biometric.compose.rememberAuthenticationLauncher
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -18,7 +22,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TooltipAnchorPosition
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
@@ -34,13 +41,16 @@ import io.github.wifi_password_manager.ui.screen.setting.components.ThemeModeIte
 import io.github.wifi_password_manager.ui.shared.LoadingDialog
 import io.github.wifi_password_manager.ui.shared.TooltipIconButton
 import io.github.wifi_password_manager.ui.theme.WiFiPasswordManagerTheme
+import io.github.wifi_password_manager.utils.isBiometricAuthenticationSupported
 import io.github.wifi_password_manager.utils.plus
+import io.github.wifi_password_manager.utils.toast
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SettingView(state: SettingViewModel.State, onAction: (SettingViewModel.Action) -> Unit) {
     val uriHandler = LocalUriHandler.current
     val navBackStack = LocalNavBackStack.current
+    val context = LocalContext.current
 
     Scaffold(
         topBar = {
@@ -117,6 +127,91 @@ fun SettingView(state: SettingViewModel.State, onAction: (SettingViewModel.Actio
                         headlineContent = { Text(text = stringResource(R.string.export_action)) },
                         supportingContent = {
                             Text(text = stringResource(R.string.export_description))
+                        },
+                    )
+                }
+            }
+
+            // Security Section
+            item {
+                SettingSection(title = stringResource(R.string.security_section)) {
+                    val isAvailable = context.isBiometricAuthenticationSupported()
+                    val appLockEnabled by rememberUpdatedState(state.settings.appLockEnabled)
+                    val launcher = rememberAuthenticationLauncher { result ->
+                        when (result) {
+                            is AuthenticationResult.Error -> {
+                                when (result.errorCode) {
+                                    BiometricPrompt.ERROR_USER_CANCELED,
+                                    BiometricPrompt.ERROR_NEGATIVE_BUTTON,
+                                    BiometricPrompt.ERROR_TIMEOUT,
+                                    BiometricPrompt.ERROR_CANCELED -> Unit
+                                    BiometricPrompt.ERROR_LOCKOUT ->
+                                        context.toast(R.string.app_lock_too_many_attempts)
+                                    BiometricPrompt.ERROR_LOCKOUT_PERMANENT ->
+                                        context.toast(R.string.app_lock_permanently_locked)
+                                    else -> context.toast(R.string.app_lock_authentication_failed)
+                                }
+                            }
+                            is AuthenticationResult.Success -> {
+                                onAction(SettingViewModel.Action.ToggleAppLock(!appLockEnabled))
+                            }
+                        }
+                    }
+                    val handleToggle by rememberUpdatedState {
+                        val request =
+                            AuthenticationRequest.biometricRequest(
+                                title =
+                                    context.getString(
+                                        if (appLockEnabled) {
+                                            R.string.app_lock_disable_title
+                                        } else {
+                                            R.string.app_lock_enable_title
+                                        }
+                                    ),
+                                authFallback =
+                                    AuthenticationRequest.Biometric.Fallback.DeviceCredential,
+                            ) {}
+                        launcher.launch(request)
+                    }
+                    ListItem(
+                        modifier = Modifier.clickable(enabled = isAvailable) { handleToggle() },
+                        headlineContent = { Text(text = stringResource(R.string.app_lock_title)) },
+                        supportingContent = {
+                            Text(text = stringResource(R.string.app_lock_description))
+                        },
+                        trailingContent = {
+                            Switch(
+                                checked = state.settings.appLockEnabled && isAvailable,
+                                onCheckedChange = { handleToggle() },
+                                enabled = isAvailable,
+                            )
+                        },
+                    )
+
+                    HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainer)
+
+                    ListItem(
+                        modifier =
+                            Modifier.clickable {
+                                onAction(
+                                    SettingViewModel.Action.ToggleSecureScreen(
+                                        !state.settings.secureScreenEnabled
+                                    )
+                                )
+                            },
+                        headlineContent = {
+                            Text(text = stringResource(R.string.secure_screen_title))
+                        },
+                        supportingContent = {
+                            Text(text = stringResource(R.string.secure_screen_description))
+                        },
+                        trailingContent = {
+                            Switch(
+                                checked = state.settings.secureScreenEnabled,
+                                onCheckedChange = {
+                                    onAction(SettingViewModel.Action.ToggleSecureScreen(it))
+                                },
+                            )
                         },
                     )
                 }

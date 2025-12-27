@@ -17,6 +17,10 @@
     <string name="theme_mode_dark">Dark</string>
     <string name="theme_mode_system">System</string>
 
+    <!-- Lock Screen -->
+    <string name="lock_title">App Locked</string>
+    <string name="unlock">Unlock</string>
+
     <!-- Network List Screen -->
     <string name="network_list_title">Saved WiFi Networks</string>
     <string name="search_hint">Search by SSID or Note</string>
@@ -41,6 +45,15 @@
     <string name="import_description">Import WiFi networks from JSON file(s)</string>
     <string name="export_action">Export networks</string>
     <string name="export_description">Export WiFi networks to a JSON file</string>
+
+    <!-- Security Section -->
+    <string name="security_section">Security</string>
+    <string name="app_lock_title">App Lock</string>
+    <string name="app_lock_description">Require screen lock to open the app</string>
+    <string name="app_lock_disable_title">Authenticate to disable App Lock</string>
+    <string name="app_lock_enable_title">Authenticate to enable App Lock</string>
+    <string name="secure_screen_title">Secure Screen</string>
+    <string name="secure_screen_description">Block screenshots and prevent display on insecure screens</string>
 
     <!-- Advanced Section -->
     <string name="advanced_section">Advanced</string>
@@ -112,4 +125,8 @@
     <string name="no_network_to_forget">No networks found to forget</string>
     <string name="no_network_to_export">No networks available to export</string>
     <string name="invalid_json">Unable to use the selected JSON file</string>
+    <string name="app_lock_required">Enter your screen lock to access</string>
+    <string name="app_lock_too_many_attempts">Too many attempts. Try again later.</string>
+    <string name="app_lock_permanently_locked">Biometric locked. Use device credentials.</string>
+    <string name="app_lock_authentication_failed">Authentication failed.</string>
 </resources>

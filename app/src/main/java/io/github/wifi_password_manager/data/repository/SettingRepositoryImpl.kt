@@ -10,6 +10,7 @@ import java.io.InputStream
 import java.io.OutputStream
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.invoke
 import kotlinx.serialization.json.Json
 
@@ -40,6 +41,10 @@ class SettingRepositoryImpl(
         )
 
     override val settings: Flow<Settings> = context.dataStore.data
+
+    override suspend fun getSettings(): Settings {
+        return settings.firstOrNull() ?: Settings()
+    }
 
     override suspend fun updateSettings(transform: suspend (Settings) -> Settings) {
         context.dataStore.updateData(transform)

@@ -64,6 +64,10 @@ class SettingViewModel(
 
         data class ToggleMaterialYou(val value: Boolean) : Action
 
+        data class ToggleAppLock(val value: Boolean) : Action
+
+        data class ToggleSecureScreen(val value: Boolean) : Action
+
         data class ToggleAutoPersistEphemeralNetworks(val value: Boolean) : Action
 
         data object ImportNetworks : Action
@@ -100,6 +104,8 @@ class SettingViewModel(
         when (action) {
             is Action.UpdateThemeMode -> onUpdateThemeMode(action.themeMode)
             is Action.ToggleMaterialYou -> onToggleMaterialYou(action.value)
+            is Action.ToggleAppLock -> onToggleAppLock(action.value)
+            is Action.ToggleSecureScreen -> onToggleSecureScreen(action.value)
             is Action.ToggleAutoPersistEphemeralNetworks ->
                 onToggleAutoPersistEphemeralNetworks(action.value)
 
@@ -118,6 +124,18 @@ class SettingViewModel(
     private fun onToggleMaterialYou(value: Boolean) {
         viewModelScope.launch {
             settingRepository.updateSettings { it.copy(useMaterialYou = value) }
+        }
+    }
+
+    private fun onToggleAppLock(value: Boolean) {
+        viewModelScope.launch {
+            settingRepository.updateSettings { it.copy(appLockEnabled = value) }
+        }
+    }
+
+    private fun onToggleSecureScreen(value: Boolean) {
+        viewModelScope.launch {
+            settingRepository.updateSettings { it.copy(secureScreenEnabled = value) }
         }
     }
 
