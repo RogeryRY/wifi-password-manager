@@ -42,14 +42,15 @@ android {
         val keystoreProperties =
             Properties().apply {
                 val keystorePropertiesFile = rootProject.file("key.properties")
-                if (!keystorePropertiesFile.exists()) return@signingConfigs
-                keystorePropertiesFile.inputStream().use { load(it) }
+                if (keystorePropertiesFile.exists()) {
+                    keystorePropertiesFile.inputStream().use(::load)
+                }
             }
         register("release") {
             storeFile = keystoreProperties["storeFile"]?.let { file(it) }
-            storePassword = keystoreProperties["storePassword"].toString()
-            keyAlias = keystoreProperties["keyAlias"].toString()
-            keyPassword = keystoreProperties["keyPassword"].toString()
+            storePassword = keystoreProperties["storePassword"]?.toString()
+            keyAlias = keystoreProperties["keyAlias"]?.toString()
+            keyPassword = keystoreProperties["keyPassword"]?.toString()
         }
     }
 
@@ -63,7 +64,7 @@ android {
                 "proguard-rules.pro",
             )
 
-            signingConfig = signingConfigs.getByName("release")
+            signingConfig = signingConfigs.getByName("release").takeIf { it.storeFile != null }
         }
     }
     buildFeatures {
