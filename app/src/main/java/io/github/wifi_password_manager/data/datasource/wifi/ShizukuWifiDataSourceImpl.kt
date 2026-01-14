@@ -21,7 +21,7 @@ import rikka.shizuku.SystemServiceHelper
 
 class ShizukuWifiDataSourceImpl(private val context: Context) : WifiDataSource {
     companion object {
-        private const val TAG = "ShizukuManager"
+        private const val TAG = "ShizukuWifiDataSource"
         private const val SHELL_PACKAGE = "com.android.shell"
     }
 

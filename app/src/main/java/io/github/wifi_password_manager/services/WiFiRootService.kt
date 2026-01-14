@@ -47,7 +47,7 @@ class WiFiRootService : RootService() {
         }
 
         private val attributionSource: AttributionSource? by lazy {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 Refine.unsafeCast(AttributionSourceHidden(0, packageName, packageName, null, null))
             } else {
                 null

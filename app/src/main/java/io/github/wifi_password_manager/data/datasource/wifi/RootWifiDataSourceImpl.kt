@@ -21,7 +21,7 @@ import kotlinx.coroutines.sync.withLock
 
 class RootWifiDataSourceImpl(context: Context) : WifiDataSource {
     companion object {
-        private const val TAG = "RootManager"
+        private const val TAG = "RootWifiDataSource"
     }
 
     private val mutex = Mutex()

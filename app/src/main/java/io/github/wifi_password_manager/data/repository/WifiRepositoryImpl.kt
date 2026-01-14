@@ -31,10 +31,10 @@ class WifiRepositoryImpl(
 
     private val dataSource: WifiDataSource by lazy {
         if (Shell.isAppGrantedRoot() == true) {
-            Log.d(TAG, "Using RootManager")
+            Log.d(TAG, "Using RootWifiDataSource")
             RootWifiDataSourceImpl(context)
         } else {
-            Log.d(TAG, "Using ShizukuManager")
+            Log.d(TAG, "Using ShizukuWifiDataSource")
             ShizukuWifiDataSourceImpl(context)
         }
     }
