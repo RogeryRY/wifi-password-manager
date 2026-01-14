@@ -13,6 +13,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.topjohnwu.superuser.Shell
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.init
 import io.github.wifi_password_manager.domain.repository.SettingRepository
@@ -20,16 +21,19 @@ import io.github.wifi_password_manager.navigation.NavigationRoot
 import io.github.wifi_password_manager.ui.screen.lock.LockView
 import io.github.wifi_password_manager.ui.theme.WiFiPasswordManagerTheme
 import kotlin.time.Duration.Companion.milliseconds
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.koin.android.ext.android.inject
 
 class MainActivity : AppCompatActivity() {
     private val settingRepository by inject<SettingRepository>()
     private var isAuthenticated by mutableStateOf(false)
+    private var isRoot by mutableStateOf<Boolean?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,10 +54,16 @@ class MainActivity : AppCompatActivity() {
                 darkTheme = settings.themeMode.isDark,
                 dynamicColor = settings.useMaterialYou,
             ) {
-                if (settings.appLockEnabled && !isAuthenticated) {
-                    LockView(onAuthenticated = { isAuthenticated = true })
-                } else {
-                    ShizukuPermissionHandler(finishCallback = { finish() }) { NavigationRoot() }
+                when {
+                    settings.appLockEnabled && !isAuthenticated -> {
+                        LockView(onAuthenticated = { isAuthenticated = true })
+                    }
+                    isRoot == true -> {
+                        NavigationRoot()
+                    }
+                    isRoot == false -> {
+                        ShizukuPermissionHandler { NavigationRoot() }
+                    }
                 }
             }
         }
@@ -62,6 +72,14 @@ class MainActivity : AppCompatActivity() {
     private fun setupSplashScreen() {
         var keepSplashScreenOn = true
         lifecycleScope.launch {
+            isRoot =
+                runCatching {
+                        withContext(Shell.EXECUTOR.asCoroutineDispatcher()) {
+                            Shell.getShell().isRoot
+                        }
+                    }
+                    .getOrElse { false }
+
             lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 delay(500.milliseconds)
                 keepSplashScreenOn = false

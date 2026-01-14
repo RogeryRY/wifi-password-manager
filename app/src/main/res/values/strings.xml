@@ -104,7 +104,7 @@
 
     <!-- Shizuku Permission Dialog -->
     <string name="shizuku_required_title">Shizuku Required</string>
-    <string name="shizuku_required_message">Shizuku is required to use this app. If you have Shizuku installed, please start it. Otherwise, you can install Shizuku from the Play Store.</string>
+    <string name="shizuku_required_message">Shizuku is required to use this app. If you have Shizuku installed, please start it. Otherwise, please install Shizuku.</string>
     <string name="open_shizuku">Open Shizuku</string>
     <string name="install_shizuku">Install Shizuku</string>
 

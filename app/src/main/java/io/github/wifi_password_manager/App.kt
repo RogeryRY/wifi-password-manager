@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.lifecycleScope
+import com.topjohnwu.superuser.Shell
 import io.github.wifi_password_manager.domain.repository.SettingRepository
 import io.github.wifi_password_manager.workers.PersistEphemeralNetworksWorker
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -20,6 +21,10 @@ import rikka.shizuku.ShizukuProvider
 
 @KoinApplication
 class App : Application() {
+    init {
+        Shell.enableVerboseLogging = BuildConfig.DEBUG
+    }
+
     private val settingRepository by inject<SettingRepository>()
 
     override fun onCreate() {

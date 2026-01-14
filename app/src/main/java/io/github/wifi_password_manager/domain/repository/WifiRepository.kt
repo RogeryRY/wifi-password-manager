@@ -17,11 +17,13 @@ interface WifiRepository {
 
     suspend fun refresh()
 
-    fun getPrivilegedConfiguredNetworks(): List<WifiConfiguration>
+    suspend fun getPrivilegedConfiguredNetworks(): List<WifiConfiguration>
 
-    fun addOrUpdateNetworkPrivileged(config: WifiConfiguration): Boolean
+    suspend fun addOrUpdateNetworkPrivileged(config: WifiConfiguration): Boolean
 
-    fun removeNetwork(netId: Int): Boolean
+    suspend fun removeNetwork(netId: Int): Boolean
+
+    suspend fun persistEphemeralNetworks()
 
     suspend fun updateNote(ssid: String, note: String?)
 }

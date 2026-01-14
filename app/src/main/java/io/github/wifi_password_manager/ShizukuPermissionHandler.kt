@@ -1,9 +1,12 @@
 package io.github.wifi_password_manager
 
 import android.content.pm.PackageManager
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -20,7 +23,7 @@ import rikka.shizuku.Shizuku
 import rikka.shizuku.ShizukuProvider
 
 @Composable
-fun ShizukuPermissionHandler(finishCallback: () -> Unit, content: @Composable () -> Unit) {
+fun ComponentActivity.ShizukuPermissionHandler(content: @Composable () -> Unit) {
     val context = LocalContext.current
 
     var isShizukuAvailable by remember { mutableStateOf(context.hasShizukuPermission) }
@@ -71,10 +74,11 @@ fun ShizukuPermissionHandler(finishCallback: () -> Unit, content: @Composable ()
     }
 
     if (showErrorDialog) {
-        ShizukuErrorDialog(onDismiss = { finishCallback() })
+        ShizukuErrorDialog(onDismiss = ::finish)
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ShizukuErrorDialog(onDismiss: () -> Unit) {
     val context = LocalContext.current
@@ -89,7 +93,7 @@ private fun ShizukuErrorDialog(onDismiss: () -> Unit) {
     }
 
     AlertDialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = {},
         title = { Text(text = stringResource(R.string.shizuku_required_title)) },
         text = { Text(text = stringResource(R.string.shizuku_required_message)) },
         confirmButton = {
@@ -105,7 +109,8 @@ private fun ShizukuErrorDialog(onDismiss: () -> Unit) {
                         context.launchUrl("https://shizuku.rikka.app/download/")
                     }
                     onDismiss()
-                }
+                },
+                shapes = ButtonDefaults.shapes(),
             ) {
                 Text(
                     text =
@@ -117,7 +122,9 @@ private fun ShizukuErrorDialog(onDismiss: () -> Unit) {
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text(text = stringResource(R.string.cancel)) }
+            TextButton(onClick = onDismiss, shapes = ButtonDefaults.shapes()) {
+                Text(text = stringResource(R.string.cancel))
+            }
         },
     )
 }

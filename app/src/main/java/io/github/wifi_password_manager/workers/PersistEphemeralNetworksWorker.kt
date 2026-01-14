@@ -1,10 +1,6 @@
-@file:Suppress("DEPRECATION")
-
 package io.github.wifi_password_manager.workers
 
 import android.content.Context
-import android.net.wifi.WifiConfiguration
-import android.net.wifi.WifiConfigurationHidden
 import android.util.Log
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
@@ -14,14 +10,10 @@ import androidx.work.PeriodicWorkRequest
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
-import dev.rikka.tools.refine.Refine
+import com.topjohnwu.superuser.Shell
 import io.github.wifi_password_manager.domain.repository.WifiRepository
 import io.github.wifi_password_manager.utils.hasShizukuPermission
 import java.util.concurrent.TimeUnit
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.invoke
 
 class PersistEphemeralNetworksWorker(
     appContext: Context,
@@ -62,37 +54,14 @@ class PersistEphemeralNetworksWorker(
     }
 
     override suspend fun doWork(): Result {
-        if (!applicationContext.hasShizukuPermission) {
-            Log.w(TAG, "Shizuku permission not available, skipping work")
+        if (!applicationContext.hasShizukuPermission && Shell.isAppGrantedRoot() != true) {
+            Log.w(TAG, "Privileged permission (root or Shizuku) not available, skipping work")
             return Result.success()
         }
 
         return try {
-            val configs = wifiRepository.getPrivilegedConfiguredNetworks()
-            val ephemeralConfigs =
-                configs.filter { Refine.unsafeCast<WifiConfigurationHidden>(it).isEphemeral }
-            if (ephemeralConfigs.isEmpty()) {
-                Log.d(TAG, "No ephemeral networks found, skipping work")
-                return Result.success()
-            }
-
-            val persistentConfigs =
-                ephemeralConfigs.map { config ->
-                    val hiddenConfig = Refine.unsafeCast<WifiConfigurationHidden>(config)
-                    hiddenConfig.apply {
-                        ephemeral = false
-                        fromWifiNetworkSuggestion = false
-                    }
-                    Refine.unsafeCast<WifiConfiguration>(hiddenConfig)
-                }
-
-            Dispatchers.IO {
-                persistentConfigs
-                    .map { async { wifiRepository.addOrUpdateNetworkPrivileged(it) } }
-                    .awaitAll()
-            }
-
-            Log.d(TAG, "Work completed. Persisted ${persistentConfigs.size} ephemeral networks")
+            wifiRepository.persistEphemeralNetworks()
+            Log.d(TAG, "Work completed")
             Result.success()
         } catch (e: Exception) {
             Log.e(TAG, "Error during work execution", e)

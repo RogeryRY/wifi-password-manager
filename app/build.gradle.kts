@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.parcelize)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.ktfmt.gradle)
@@ -68,6 +69,7 @@ android {
         }
     }
     buildFeatures {
+        aidl = true
         compose = true
         buildConfig = true
     }
@@ -134,6 +136,8 @@ dependencies {
     compileOnly(libs.stub)
     compileOnly(projects.hiddenApi)
     implementation(libs.hiddenapibypass)
+    implementation(libs.libsu.core)
+    implementation(libs.libsu.service)
     implementation(libs.refine.runtime)
     implementation(libs.shizuku.api)
     implementation(libs.shizuku.provider)
