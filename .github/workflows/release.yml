@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Setup Java
         uses: actions/setup-java@v5
@@ -43,10 +43,14 @@ jobs:
         run: ./gradlew assembleRelease --no-daemon
 
       - name: Upload build artifact
-        uses: actions/upload-artifact@v4.6.2
+        uses: actions/upload-artifact@v6
         with:
           name: app-release.apk
           path: ./app/build/outputs/apk/release/app-release.apk
+
+      - name: Get version code
+        id: version
+        run: echo "VERSION_CODE=$(grep 'versionCode' ./app/build.gradle.kts | awk '{print $3}')" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
         run: |
@@ -54,6 +58,7 @@ jobs:
             --verify-tag \
             --title "${{ github.ref_name }}" \
             --generate-notes \
+            --notes-file fastlane/android/metadata/en-US/changelogs/${{ steps.version.outputs.VERSION_CODE }}.txt \
             ./app/build/outputs/apk/release/app-release.apk
         env:
           GH_TOKEN: ${{ github.token }}
