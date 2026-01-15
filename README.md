@@ -23,6 +23,15 @@ An Android application for managing saved WiFi network passwords using privilege
 - **Android 11 (API 30) or higher**
 - **For system-level WiFi management**: [Shizuku](https://shizuku.rikka.app/) or root access
 
+## Installation
+
+<a href="https://apt.izzysoft.de/packages/io.github.wifi_password_manager">
+    <img src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroid.png" height="80" alt="Get it on IzzyOnDroid" />
+</a>
+<a href="https://github.com/Khh-vu/wifi-password-manager/releases">
+    <img src=".github/assets/github_badge.png" height="80" alt="Get it on GitHub" />
+</a>
+
 ## Technical Stack
 
 ### Architecture
