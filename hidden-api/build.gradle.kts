@@ -5,10 +5,10 @@ plugins {
 
 android {
     namespace = "io.github.wifi_password_manager.hidden_api"
-    compileSdk = 36
+    compileSdk { version = release(36) }
 
     defaultConfig {
-        minSdk = 30
+        minSdk { version = release(30) }
         consumerProguardFiles("consumer-rules.pro")
     }
 

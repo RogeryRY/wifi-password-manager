@@ -1,4 +1,5 @@
 import java.util.Properties
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
 plugins {
@@ -22,6 +23,7 @@ kotlin {
         progressiveMode = true
         languageVersion = KotlinVersion.KOTLIN_2_3
         apiVersion = KotlinVersion.KOTLIN_2_3
+        jvmTarget = JvmTarget.JVM_21
     }
 }
 
@@ -31,8 +33,8 @@ android {
 
     defaultConfig {
         applicationId = "io.github.wifi_password_manager"
-        minSdk = 30
-        targetSdk = 36
+        minSdk { version = release(30) }
+        targetSdk { version = release(36) }
         versionCode = 9
         versionName = "1.8"
 
