@@ -2,6 +2,11 @@
 
 An Android application for managing saved WiFi network passwords using privileged system access through [Shizuku](https://shizuku.rikka.app/) or root access.
 
+[![RB Status](https://shields.rbtlog.dev/simple/io.github.wifi_password_manager)](https://shields.rbtlog.dev/io.github.wifi_password_manager)
+[![Downloads](https://img.shields.io/github/downloads/Khh-vu/wifi-password-manager/total.svg)](https://github.com/Khh-vu/wifi-password-manager/releases)
+[![Repo Size](https://img.shields.io/github/repo-size/Khh-vu/wifi-password-manager)](https://github.com/Khh-vu/wifi-password-manager)
+[![License](https://img.shields.io/github/license/Khh-vu/wifi-password-manager)](LICENSE)
+
 ## Key Features
 
 - **View Saved Networks**: Display all configured WiFi networks with their passwords
