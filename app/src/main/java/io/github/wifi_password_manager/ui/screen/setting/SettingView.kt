@@ -26,6 +26,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
@@ -144,7 +145,7 @@ fun SettingView(state: SettingViewModel.State, onAction: (SettingViewModel.Actio
             // Security Section
             item {
                 SettingSection(title = stringResource(R.string.security_section)) {
-                    val isAvailable = context.isBiometricAuthenticationSupported()
+                    val isAvailable = if (LocalInspectionMode.current) false else context.isBiometricAuthenticationSupported()
                     val appLockEnabled by rememberUpdatedState(state.settings.appLockEnabled)
                     val launcher = rememberAuthenticationLauncher { result ->
                         when (result) {
