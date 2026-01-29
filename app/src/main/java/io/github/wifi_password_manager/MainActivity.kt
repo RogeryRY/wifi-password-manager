@@ -5,9 +5,11 @@ import android.view.WindowManager
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.core.os.LocaleListCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -43,6 +45,7 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setupSplashScreen()
         setupSecureScreen()
+        setupLanguage()
 
         val initialSettings = runBlocking { settingRepository.getSettings() }
         isAuthenticated = !initialSettings.appLockEnabled
@@ -104,6 +107,24 @@ class MainActivity : AppCompatActivity() {
                         } else {
                             window?.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
                         }
+                    }
+            }
+        }
+    }
+
+    private fun setupLanguage() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                settingRepository.settings
+                    .map { it.language }
+                    .distinctUntilChanged()
+                    .collect { language ->
+                        val localeList =
+                            LocaleListCompat.forLanguageTags(
+                                if ('-' in language.code) language.code.split("-").first()
+                                else language.code
+                            )
+                        AppCompatDelegate.setApplicationLocales(localeList)
                     }
             }
         }

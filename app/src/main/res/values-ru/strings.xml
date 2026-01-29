@@ -36,6 +36,8 @@
 
     <!-- Appearance Section -->
     <string name="appearance_section">Внешний вид</string>
+    <string name="language_title">Язык</string>
+    <string name="language_description">Изменить язык приложения</string>
     <string name="app_theme_title">Тема приложения</string>
     <string name="app_theme_description">Изменить внешний вид приложения</string>
     <string name="material_you_title">Material You</string>

@@ -36,6 +36,7 @@ import io.github.wifi_password_manager.R
 import io.github.wifi_password_manager.navigation.LocalNavBackStack
 import io.github.wifi_password_manager.navigation.Route
 import io.github.wifi_password_manager.ui.screen.setting.components.ForgetAllConfirmDialog
+import io.github.wifi_password_manager.ui.screen.setting.components.LanguageItem
 import io.github.wifi_password_manager.ui.screen.setting.components.SettingSection
 import io.github.wifi_password_manager.ui.screen.setting.components.ThemeModeItem
 import io.github.wifi_password_manager.ui.shared.LoadingDialog
@@ -75,6 +76,12 @@ fun SettingView(state: SettingViewModel.State, onAction: (SettingViewModel.Actio
             // Appearance Section
             item {
                 SettingSection(title = stringResource(R.string.appearance_section)) {
+                    LanguageItem(language = state.settings.language) {
+                        onAction(SettingViewModel.Action.UpdateLanguage(it))
+                    }
+
+                    HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainer)
+
                     ThemeModeItem(themeMode = state.settings.themeMode) {
                         onAction(SettingViewModel.Action.UpdateThemeMode(it))
                     }

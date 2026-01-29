@@ -26,27 +26,25 @@ import io.github.wifi_password_manager.ui.theme.WiFiPasswordManagerTheme
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun ThemeModeItem(themeMode: Settings.ThemeMode, onThemeModeChange: (Settings.ThemeMode) -> Unit) {
+fun LanguageItem(language: Settings.Language, onLanguageChange: (Settings.Language) -> Unit) {
     var showBottomSheet by rememberSaveable { mutableStateOf(false) }
 
     ListItem(
         modifier = Modifier.clickable { showBottomSheet = true },
-        headlineContent = { Text(text = stringResource(R.string.app_theme_title)) },
-        supportingContent = { Text(text = stringResource(R.string.app_theme_description)) },
-        trailingContent = { Text(text = stringResource(themeMode.resId)) },
+        headlineContent = { Text(text = stringResource(R.string.language_title)) },
+        supportingContent = { Text(text = stringResource(R.string.language_description)) },
+        trailingContent = { Text(text = language.displayName) },
     )
 
     if (showBottomSheet) {
         ModalBottomSheet(onDismissRequest = { showBottomSheet = false }) {
             Column(modifier = Modifier.padding(horizontal = 12.dp)) {
-                Settings.ThemeMode.entries.forEach {
+                Settings.Language.entries.forEach {
                     ListItem(
-                        onClick = { onThemeModeChange(it) },
-                        selected = it == themeMode,
-                        leadingContent = {
-                            RadioButton(selected = it == themeMode, onClick = null)
-                        },
-                        content = { Text(text = stringResource(it.resId)) },
+                        onClick = { onLanguageChange(it) },
+                        selected = it == language,
+                        leadingContent = { RadioButton(selected = it == language, onClick = null) },
+                        content = { Text(text = it.displayName) },
                         colors =
                             ListItemDefaults.colors(
                                 containerColor = BottomSheetDefaults.ContainerColor
@@ -60,8 +58,8 @@ fun ThemeModeItem(themeMode: Settings.ThemeMode, onThemeModeChange: (Settings.Th
 
 @PreviewLightDark
 @Composable
-private fun ThemeModeItemPreview() {
+private fun LanguageItemPreview() {
     WiFiPasswordManagerTheme {
-        ThemeModeItem(themeMode = Settings.ThemeMode.SYSTEM, onThemeModeChange = {})
+        LanguageItem(language = Settings.Language.ENGLISH, onLanguageChange = {})
     }
 }
