@@ -22,13 +22,14 @@ import io.github.wifi_password_manager.domain.repository.SettingRepository
 import io.github.wifi_password_manager.navigation.NavigationRoot
 import io.github.wifi_password_manager.ui.screen.lock.LockView
 import io.github.wifi_password_manager.ui.theme.WiFiPasswordManagerTheme
+import io.github.wifi_password_manager.utils.isBiometricAuthenticationSupported
+import io.github.wifi_password_manager.utils.toast
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.koin.android.ext.android.inject
 
@@ -47,11 +48,8 @@ class MainActivity : AppCompatActivity() {
         setupSecureScreen()
         setupLanguage()
 
-        val initialSettings = runBlocking { settingRepository.getSettings() }
-        isAuthenticated = !initialSettings.appLockEnabled
-
         setContent {
-            val settings by settingRepository.settings.collectAsStateWithLifecycle(initialSettings)
+            val settings by settingRepository.settings.collectAsStateWithLifecycle()
 
             WiFiPasswordManagerTheme(
                 darkTheme = settings.themeMode.isDark,
@@ -74,7 +72,18 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupSplashScreen() {
         var keepSplashScreenOn = true
+        installSplashScreen().apply { setKeepOnScreenCondition { keepSplashScreenOn } }
+
         lifecycleScope.launch {
+            val settings = settingRepository.settings.value
+
+            if (settings.appLockEnabled && !isBiometricAuthenticationSupported()) {
+                settingRepository.updateSettings { it.copy(appLockEnabled = false) }
+                toast(R.string.app_lock_disabled)
+            }
+
+            isAuthenticated = !settingRepository.settings.value.appLockEnabled
+
             isRoot =
                 runCatching {
                         withContext(Shell.EXECUTOR.asCoroutineDispatcher()) {
@@ -83,13 +92,9 @@ class MainActivity : AppCompatActivity() {
                     }
                     .getOrElse { false }
 
-            lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                delay(500.milliseconds)
-                keepSplashScreenOn = false
-            }
+            delay(500.milliseconds)
+            keepSplashScreenOn = false
         }
-
-        installSplashScreen().apply { setKeepOnScreenCondition { keepSplashScreenOn } }
     }
 
     private fun setupSecureScreen() {
