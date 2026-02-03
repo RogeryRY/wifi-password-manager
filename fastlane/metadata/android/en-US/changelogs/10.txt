@@ -1,0 +1,2 @@
+- Added in-app language switching
+- Improved app lock UX
