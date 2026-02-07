@@ -124,11 +124,7 @@ class MainActivity : AppCompatActivity() {
                     .map { it.language }
                     .distinctUntilChanged()
                     .collect { language ->
-                        val localeList =
-                            LocaleListCompat.forLanguageTags(
-                                if ('-' in language.code) language.code.split("-").first()
-                                else language.code
-                            )
+                        val localeList = LocaleListCompat.forLanguageTags(language.code)
                         AppCompatDelegate.setApplicationLocales(localeList)
                     }
             }
