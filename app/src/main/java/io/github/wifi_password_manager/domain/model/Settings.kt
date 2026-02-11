@@ -48,5 +48,6 @@ data class Settings(
     enum class Language(val code: String, val displayName: String) {
         ENGLISH("en", "English"),
         RUSSIAN("ru", "Русский"),
+        CHINESE_SIMPLIFIED("zh-CN", "中文 (简体)"),
     }
 }
