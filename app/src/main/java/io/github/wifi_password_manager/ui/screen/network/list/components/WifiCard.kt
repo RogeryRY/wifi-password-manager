@@ -153,7 +153,7 @@ private fun SSIDItem(
                 )
 
                 HorizontalDivider(
-                    modifier = Modifier.padding(horizontal = MenuDefaults.HorizontalDividerPadding)
+                    modifier = Modifier.padding(MenuDefaults.HorizontalDividerPadding)
                 )
 
                 DropdownMenuItem(
@@ -172,7 +172,7 @@ private fun SSIDItem(
                 )
 
                 HorizontalDivider(
-                    modifier = Modifier.padding(horizontal = MenuDefaults.HorizontalDividerPadding)
+                    modifier = Modifier.padding(MenuDefaults.HorizontalDividerPadding)
                 )
 
                 DropdownMenuItem(

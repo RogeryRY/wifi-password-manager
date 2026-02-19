@@ -323,7 +323,7 @@ class SettingViewModel(
             _state.update { it.copy(isLoading = true, showForgetAllDialog = false) }
 
             runCatching {
-                    val networks = wifiRepository.getAllNetworksList()
+                    val networks = wifiRepository.getPrivilegedConfiguredNetworks()
                     val validNetworks = networks.filter { it.networkId != -1 }
 
                     if (validNetworks.isEmpty()) {
