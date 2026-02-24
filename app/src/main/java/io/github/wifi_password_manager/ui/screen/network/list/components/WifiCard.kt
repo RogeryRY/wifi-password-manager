@@ -35,7 +35,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboard
@@ -117,7 +117,7 @@ private fun SSIDItem(
     val navBackStack = LocalNavBackStack.current
     val context = LocalContext.current
 
-    var expanded by rememberSaveable { mutableStateOf(false) }
+    var expanded by retain { mutableStateOf(false) }
 
     ListItem(
         modifier = modifier,
@@ -231,7 +231,7 @@ private fun SSIDItem(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun PasswordItem(modifier: Modifier = Modifier, network: WifiNetwork) {
-    var obscured by rememberSaveable { mutableStateOf(true) }
+    var obscured by retain { mutableStateOf(true) }
 
     val trailingContent =
         @Composable {
@@ -272,9 +272,7 @@ private fun PasswordItem(modifier: Modifier = Modifier, network: WifiNetwork) {
                             network.password
                         },
                     modifier = Modifier.clickable { obscured = !obscured },
-                    maxLines = 1,
-                    overflow = TextOverflow.Clip,
-                    letterSpacing = if (obscured) 4.sp else TextUnit.Unspecified,
+                    letterSpacing = if (obscured) 2.sp else TextUnit.Unspecified,
                 )
             } else {
                 Text(text = stringResource(R.string.no_password))
