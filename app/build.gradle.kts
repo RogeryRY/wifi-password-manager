@@ -4,9 +4,7 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
 plugins {
     alias(libs.plugins.aboutLibraries)
-    alias(libs.plugins.aboutLibraries.android)
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.parcelize)
     alias(libs.plugins.kotlin.serialization)
@@ -35,8 +33,8 @@ android {
         applicationId = "io.github.wifi_password_manager"
         minSdk { version = release(30) }
         targetSdk { version = release(36) }
-        versionCode = 11
-        versionName = "1.10"
+        versionCode = 12
+        versionName = "1.11"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -75,7 +73,13 @@ android {
         compose = true
         buildConfig = true
     }
-    packaging { resources { excludes += "/META-INF/{AL2.0,LGPL2.1}" } }
+    packaging {
+        resources { excludes += "/META-INF/{AL2.0,LGPL2.1}" }
+        jniLibs {
+            keepDebugSymbols +=
+                setOf("**/libandroidx.graphics.path.so", "**/libdatastore_shared_counter.so")
+        }
+    }
     dependenciesInfo {
         includeInApk = false
         includeInBundle = false
@@ -83,6 +87,9 @@ android {
 }
 
 composeCompiler {
+    stabilityConfigurationFiles.addAll(
+        rootProject.layout.projectDirectory.file("stability_config.conf"),
+    )
     reportsDestination = layout.buildDirectory.dir("compose_compiler")
     metricsDestination = layout.buildDirectory.dir("compose_compiler")
 }
@@ -128,8 +135,6 @@ dependencies {
     // JetBrains
     implementation(libs.adaptive)
     implementation(libs.adaptive.navigation3)
-    implementation(libs.kotlinx.collections.immutable)
-    implementation(libs.kotlinx.datetime)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.lifecycle.viewmodel.compose)
     implementation(libs.lifecycle.viewmodel.navigation3)

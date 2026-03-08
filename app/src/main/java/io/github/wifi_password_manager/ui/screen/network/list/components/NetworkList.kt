@@ -21,13 +21,12 @@ import io.github.wifi_password_manager.ui.theme.WiFiPasswordManagerTheme
 import io.github.wifi_password_manager.utils.DeviceConfiguration
 import io.github.wifi_password_manager.utils.MOCK
 import io.github.wifi_password_manager.utils.plus
-import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 fun NetworkList(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
-    networks: ImmutableList<WifiNetwork>,
+    networks: List<WifiNetwork>,
     onAction: (NetworkListViewModel.Action) -> Unit,
 ) {
     val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass

@@ -7,23 +7,27 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.PlatformFile
+import io.github.vinceglb.filekit.delete
 import io.github.vinceglb.filekit.dialogs.FileKitMode
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.openFilePicker
 import io.github.vinceglb.filekit.dialogs.openFileSaver
+import io.github.vinceglb.filekit.exists
+import io.github.vinceglb.filekit.extension
 import io.github.vinceglb.filekit.name
-import io.github.vinceglb.filekit.readString
-import io.github.vinceglb.filekit.writeString
+import io.github.vinceglb.filekit.readBytes
+import io.github.vinceglb.filekit.write
 import io.github.wifi_password_manager.R
+import io.github.wifi_password_manager.domain.model.ExportOption
 import io.github.wifi_password_manager.domain.model.Settings
+import io.github.wifi_password_manager.domain.model.WifiNetwork
 import io.github.wifi_password_manager.domain.repository.FileRepository
 import io.github.wifi_password_manager.domain.repository.SettingRepository
 import io.github.wifi_password_manager.domain.repository.WifiRepository
+import io.github.wifi_password_manager.utils.Crypto
 import io.github.wifi_password_manager.utils.UiText
+import io.github.wifi_password_manager.utils.groupAndSortedBySsid
 import io.github.wifi_password_manager.utils.toWifiConfigurations
-import kotlin.time.Clock
-import kotlin.time.Duration.Companion.seconds
-import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -37,12 +41,11 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.invoke
 import kotlinx.coroutines.launch
-import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.format.FormatStringsInDatetimeFormats
-import kotlinx.datetime.format.byUnicodePattern
-import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.SerializationException
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import javax.crypto.AEADBadTagException
+import kotlin.time.Duration.Companion.seconds
 
 class SettingViewModel(
     private val settingRepository: SettingRepository,
@@ -57,6 +60,9 @@ class SettingViewModel(
         val settings: Settings = Settings(),
         val isLoading: Boolean = false,
         val showForgetAllDialog: Boolean = false,
+        val showExportDialog: Boolean = false,
+        val showImportPasswordDialog: Boolean = false,
+        val pendingImportFiles: List<PlatformFile> = emptyList(),
     )
 
     sealed interface Action {
@@ -74,7 +80,15 @@ class SettingViewModel(
 
         data object ImportNetworks : Action
 
-        data object ExportNetworks : Action
+        data object HideImportPasswordDialog : Action
+
+        data class ConfirmImportWithPassword(val password: String) : Action
+
+        data object ShowExportDialog : Action
+
+        data object HideExportDialog : Action
+
+        data class ConfirmExport(val option: ExportOption, val password: String) : Action
 
         data object ShowForgetAllDialog : Action
 
@@ -113,7 +127,14 @@ class SettingViewModel(
                 onToggleAutoPersistEphemeralNetworks(action.value)
 
             is Action.ImportNetworks -> onImportNetworks()
-            is Action.ExportNetworks -> onExportNetworks()
+            is Action.HideImportPasswordDialog ->
+                _state.update {
+                    it.copy(showImportPasswordDialog = false, pendingImportFiles = emptyList())
+                }
+            is Action.ConfirmImportWithPassword -> onConfirmImportWithPassword(action.password)
+            is Action.ShowExportDialog -> onShowExportDialog()
+            is Action.HideExportDialog -> _state.update { it.copy(showExportDialog = false) }
+            is Action.ConfirmExport -> onExportNetworks(action.option, action.password)
             is Action.ShowForgetAllDialog -> onShowForgetAllDialog()
             is Action.HideForgetAllDialog -> _state.update { it.copy(showForgetAllDialog = false) }
             is Action.ConfirmForgetAllNetworks -> onForgetAllNetworks()
@@ -152,28 +173,47 @@ class SettingViewModel(
         }
     }
 
-    @OptIn(ExperimentalTime::class, FormatStringsInDatetimeFormats::class)
-    private fun onExportNetworks() {
+    private fun onShowExportDialog() {
         viewModelScope.launch {
-            runCatching {
-                    val count = wifiRepository.getNetworkCount()
-                    if (count == 0) {
-                        _event.send(
-                            Event.ShowMessage(UiText.StringResource(R.string.no_network_to_export))
-                        )
-                        return@launch
-                    }
+            val count = wifiRepository.getNetworkCount()
+            if (count == 0) {
+                _event.send(Event.ShowMessage(UiText.StringResource(R.string.no_network_to_export)))
+                return@launch
+            }
+            _state.update { it.copy(showExportDialog = true) }
+        }
+    }
 
-                    val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
-                    val formatter =
-                        LocalDateTime.Format { byUnicodePattern(pattern = "yyyy-MM-dd_HH:mm:ss") }
-                    val file =
-                        FileKit.openFileSaver(
-                            suggestedName = "WiFi_${formatter.format(now)}",
-                            extension = "json",
-                        ) ?: return@launch
-                    val networks = wifiRepository.getAllNetworksList()
-                    Dispatchers.IO { file.writeString(fileRepository.networksToJson(networks)) }
+    private fun onExportNetworks(option: ExportOption, password: String) {
+        _state.update { it.copy(showExportDialog = false) }
+        viewModelScope.launch {
+            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH:mm:ss")
+            val isEncrypted = password.isNotEmpty()
+            val extension =
+                when (option) {
+                    ExportOption.PLAIN -> "json"
+                    ExportOption.COMPRESSED -> "json.gz"
+                }
+            val file =
+                FileKit.openFileSaver(
+                    suggestedName = "WiFi_${LocalDateTime.now().format(formatter)}",
+                    extension = if (isEncrypted) "$extension.bin" else extension,
+                ) ?: return@launch
+
+            runCatching {
+                    Dispatchers.IO {
+                        val networks = wifiRepository.getAllNetworksList().groupAndSortedBySsid()
+                        val data =
+                            when (option) {
+                                ExportOption.PLAIN ->
+                                    fileRepository.networksToJson(networks).toByteArray()
+                                ExportOption.COMPRESSED -> fileRepository.networksToGZip(networks)
+                            }
+
+                        file.write(
+                            if (isEncrypted) Crypto.encrypt(data, password, option) else data
+                        )
+                    }
                 }
                 .fold(
                     onSuccess = {
@@ -190,6 +230,7 @@ class SettingViewModel(
                                 UiText.StringResource(R.string.export_networks_failed)
                             )
                         )
+                        if (file.exists()) file.delete()
                     },
                 )
         }
@@ -200,17 +241,39 @@ class SettingViewModel(
             val files =
                 FileKit.openFilePicker(
                         mode = FileKitMode.Multiple(),
-                        type = FileKitType.File("json"),
+                        type = FileKitType.File("json", "gz", "bin"),
                     )
                     ?.takeIf { it.isNotEmpty() } ?: return@launch
 
+            val hasEncryptedFiles = files.any { it.extension == "bin" }
+            if (hasEncryptedFiles) {
+                _state.update {
+                    it.copy(showImportPasswordDialog = true, pendingImportFiles = files)
+                }
+                return@launch
+            }
+
+            performImport(files, password = null)
+        }
+    }
+
+    private fun onConfirmImportWithPassword(password: String) {
+        val files = _state.value.pendingImportFiles
+        _state.update {
+            it.copy(showImportPasswordDialog = false, pendingImportFiles = emptyList())
+        }
+        performImport(files, password)
+    }
+
+    private fun performImport(files: List<PlatformFile>, password: String?) {
+        viewModelScope.launch {
             _state.update { it.copy(isLoading = true) }
 
             try {
                 if (files.size == 1) {
-                    importSingleFile(files.first())
+                    importSingleFile(files.first(), password)
                 } else {
-                    importMultipleFiles(files)
+                    importMultipleFiles(files, password)
                 }
                 _event.send(
                     Event.ShowMessage(UiText.StringResource(R.string.import_networks_success))
@@ -218,6 +281,9 @@ class SettingViewModel(
             } catch (e: SerializationException) {
                 Log.e(TAG, "Error parsing JSON", e)
                 _event.send(Event.ShowMessage(UiText.StringResource(R.string.invalid_json)))
+            } catch (e: AEADBadTagException) {
+                Log.e(TAG, "Decryption failed - wrong password or malformed", e)
+                _event.send(Event.ShowMessage(UiText.StringResource(R.string.wrong_password)))
             } catch (e: Throwable) {
                 Log.e(TAG, "Error importing networks", e)
                 _event.send(
@@ -230,9 +296,9 @@ class SettingViewModel(
         }
     }
 
-    private suspend fun importSingleFile(file: PlatformFile) =
+    private suspend fun importSingleFile(file: PlatformFile, password: String?) =
         Dispatchers.IO {
-            val networks = fileRepository.networksFromJson(file.readString())
+            val networks = parseNetworksFromFile(file, password)
             if (networks.isEmpty()) {
                 _event.send(Event.ShowMessage(UiText.StringResource(R.string.no_network_to_import)))
                 return@IO
@@ -253,12 +319,12 @@ class SettingViewModel(
                 .awaitAll()
         }
 
-    private suspend fun importMultipleFiles(files: List<PlatformFile>) {
+    private suspend fun importMultipleFiles(files: List<PlatformFile>, password: String?) {
         Dispatchers.IO {
             val allNetworks =
                 files.flatMap { file ->
-                    runCatching { fileRepository.networksFromJson(file.readString()) }
-                        .onFailure { Log.e(TAG, "Error parsing JSON from file: ${file.name}", it) }
+                    runCatching { parseNetworksFromFile(file, password) }
+                        .onFailure { Log.e(TAG, "Error parsing file: ${file.name}", it) }
                         .getOrDefault(emptyList())
                 }
 
@@ -303,6 +369,28 @@ class SettingViewModel(
                 .filter { it.note != null }
                 .map { async { wifiRepository.updateNote(it.ssid, it.note) } }
                 .awaitAll()
+        }
+    }
+
+    private suspend fun parseNetworksFromFile(
+        file: PlatformFile,
+        password: String?,
+    ): List<WifiNetwork> {
+        val data = file.readBytes()
+        return when (file.extension) {
+            "bin" if password != null -> {
+                val (option, decrypted) = Crypto.decrypt(data, password)
+                when (option) {
+                    ExportOption.PLAIN -> fileRepository.networksFromJson(String(decrypted))
+                    ExportOption.COMPRESSED -> fileRepository.networksFromGZip(decrypted)
+                }
+            }
+            "gz" -> {
+                fileRepository.networksFromGZip(data)
+            }
+            else -> {
+                fileRepository.networksFromJson(String(data))
+            }
         }
     }
 
