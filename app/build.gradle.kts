@@ -33,8 +33,8 @@ android {
         applicationId = "io.github.wifi_password_manager"
         minSdk { version = release(30) }
         targetSdk { version = release(36) }
-        versionCode = 11
-        versionName = "1.10"
+        versionCode = 12
+        versionName = "1.11"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
